@@ -1,0 +1,20 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ahp_autosave.xlsx
+.ahp_language.txt
+
+# Course/reference material — not the author's own work, kept local only.
+AHP.pdf
+NemTeljesenKitoltott.pdf
+AHP_GUI_specifikáció.docx
+~$*.docx
+pcmc_fidelity.py
+
+# OS / editor cruft
+.DS_Store
+streamlit_run.log
+
+# Claude Code local tooling config — not part of the app.
+.claude/

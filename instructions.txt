@@ -1,0 +1,54 @@
+AHP GUI - Setup & Run Instructions (Windows, Command Prompt)
+====================================================================
+
+ONE-TIME SETUP
+--------------
+1. Unzip this folder anywhere.
+
+2. Open Command Prompt (search "cmd" in the Start menu) and navigate
+   into this folder, e.g.:
+     cd Downloads\ahp
+
+3. Create the virtual environment:
+     py -m venv .venv
+
+4. Activate it:
+     .venv\Scripts\activate.bat
+   The prompt should now start with (.venv) - that confirms it worked.
+
+5. Install the app's dependencies:
+     pip install -r requirements.txt
+
+
+RUNNING THE APP (every time)
+-----------------------------
+1. Open Command Prompt and navigate into this folder:
+     cd Downloads\ahp
+
+2. Activate the virtual environment:
+     .venv\Scripts\activate.bat
+
+3. Run the app:
+     streamlit run dashboard.py
+
+   Your browser should open automatically at http://localhost:8501
+   If it does NOT open on its own (this can happen depending on which
+   browser/antivirus software is installed), just open a browser yourself
+   and go to:
+     http://localhost:8501
+   Keep the Command Prompt window open while you use the app.
+   To stop the app: click the Command Prompt window, press Ctrl+C.
+
+
+TROUBLESHOOTING
+----------------
+- Browser didn't open automatically: check the Command Prompt - if it
+  printed a line like "You can now view your Streamlit app in your
+  browser" with a http://localhost:8501 address, the app is running
+  fine and it's just the auto-open that failed (security software,
+  browser settings, etc.). Open that address by hand in any browser.
+- If the Command Prompt shows an error instead of that line, the app
+  itself didn't start - re-check steps 3-5 of ONE-TIME SETUP.
+- If port 8501 is already used by something else, Streamlit will
+  print a different port number in that same line - use that address
+  instead.
