@@ -7,9 +7,7 @@ line-by-line port of the course's PCMC.m). The numerical algorithms —
 notably the CR-minimal completion by 20 sweeps of single-entry fminbound
 optimization, and the graph-Laplacian closed form for incomplete LLSM — are
 kept exactly as validated there; only the plumbing (globals -> parameters,
-explicit connectivity check) has changed. See AHP.pdf for the eigenvector
-method and CR, and NemTeljesenKitoltott.pdf for the incomplete-matrix theory
-(graph connectivity, CR-minimal completion, the LLSM extension).
+explicit connectivity check) has changed. 
 """
 from __future__ import annotations
 
@@ -124,9 +122,7 @@ def complete_min_cr(
     block-coordinate descent: repeatedly 1D-optimize each missing entry (in
     log-scale, so the reciprocal constraint holds automatically) holding
     every other entry fixed, sweeping through all missing pairs ``sweeps``
-    times. This is the exact scheme pcmc.py / PCMC.m uses (fminbnd,
-    xtol=1e-4, 20 sweeps) — kept unchanged as the course's validated
-    algorithm for CR-minimal completion."""
+    times."""
     M = values.copy()
     for i, j in missing_pairs:
         M[i, j] = 1.0
@@ -180,8 +176,7 @@ def solve(values: np.ndarray) -> PCMResult:
     """Compute both weight vectors, lambda_max and CR for a PCM, handling the
     incomplete case (CR-minimal completion for the eigenvector method, the
     graph-Laplacian closed form for LLSM) transparently. Raises
-    DisconnectedMatrixError if the comparison graph isn't connected — per
-    NemTeljesenKitoltott.pdf, no unique weight vector exists in that case."""
+    DisconnectedMatrixError if the comparison graph isn't connected."""
     n = values.shape[0]
     if not is_connected(values):
         raise DisconnectedMatrixError(
