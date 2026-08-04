@@ -310,13 +310,13 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     },
     "sensitivity.no_reversal_at_0": {
         "en": "No ranking change occurs even all the way down to weight 0.",
-        "hu": "Egészen a 0 súlyig sem következik be rangsorváltozás.",
+        "hu": "Egészen a 0 súlyig sem következik be rangsorfordulás.",
     },
     "sensitivity.no_reversal_at_1": {
         "en": "No ranking change occurs even all the way up to weight 1.",
-        "hu": "Egészen az 1 súlyig sem következik be rangsorváltozás.",
+        "hu": "Egészen az 1 súlyig sem következik be rangsorfordulás.",
     },
-    "sensitivity.crossings_caption": {"en": "Ranking-changing crossings within [0, 1]:", "hu": "Rangsorváltó metszéspontok a [0, 1] intervallumban:"},
+    "sensitivity.crossings_caption": {"en": "Ranking-changing crossings within [0, 1]:", "hu": "Rangsorforduló metszéspontok a [0, 1] intervallumban:"},
     "sensitivity.chart_title": {"en": "Sensitivity of '{name}'", "hu": "'{name}' érzékenysége"},
     "sensitivity.chart_xaxis": {
         "en": "Local weight of '{name}' within its parent", "hu": "'{name}' lokális súlya a szülőjén belül",
@@ -331,7 +331,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "sensitivity.col_can_decrease_to": {"en": "Can decrease to", "hu": "Csökkenthető eddig"},
     "sensitivity.col_can_increase_to": {"en": "Can increase to", "hu": "Növelhető eddig"},
     "sensitivity.col_max_change": {"en": "Max. safe change", "hu": "Max. biztonságos változás"},
-    "sensitivity.unbounded": {"en": "unbounded", "hu": "korlátlan"},
+    "sensitivity.unbounded": {"en": "unbounded", "hu": "bármeddig"},
     "sensitivity.most_sensitive": {
         "en": "'{criterion_name}' is the most sensitive: only a change of {max_change} "
         "flips the top-{top_x} ranking.",
