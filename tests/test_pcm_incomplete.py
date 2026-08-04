@@ -1,7 +1,7 @@
-"""Regression test: the 8x8 not-fully-filled-in example from pcmc_fidelity.py
+"""Regression test: the 8x8 not-fully-filled-in example from pcmc.py
 (itself a line-by-line port of the course's PCMC.m) must produce the exact
 same numbers after the refactor into ahp_core/pcm.py. Reference values below
-were captured by running pcmc_fidelity.py's main() directly."""
+were captured by running pcmc.py's main() directly."""
 from __future__ import annotations
 
 import numpy as np
@@ -37,12 +37,12 @@ def test_graph_is_connected():
     assert pcm.is_connected(MATRIX)
 
 
-def test_llsm_matches_pcmc_fidelity_reference():
+def test_llsm_matches_pcmc_reference():
     result = pcm.solve(MATRIX)
     np.testing.assert_allclose(result.weights_llsm, REFERENCE_LLSM, atol=1e-6)
 
 
-def test_eigenvector_cr_minimal_completion_matches_pcmc_fidelity_reference():
+def test_eigenvector_cr_minimal_completion_matches_pcmc_reference():
     result = pcm.solve(MATRIX)
     assert not result.was_complete
     np.testing.assert_allclose(result.lambda_max, REFERENCE_LAMBDA_MAX, atol=1e-3)

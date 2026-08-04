@@ -2,7 +2,7 @@
 method, the LLSM (logarithmic least squares / geometric mean) method, the CR
 consistency index, and the not-fully-filled-in extensions of all of these.
 
-This is a clean, global-variable-free port of pcmc_fidelity.py (itself a
+This is a clean, global-variable-free port of pcmc.py (itself a
 line-by-line port of the course's PCMC.m). The numerical algorithms —
 notably the CR-minimal completion by 20 sweeps of single-entry fminbound
 optimization, and the graph-Laplacian closed form for incomplete LLSM — are
@@ -21,7 +21,7 @@ from scipy.optimize import fminbound
 # Average lambda_max of random n x n reciprocal matrices (entries drawn
 # uniformly from {1/9, ..., 1/2, 1, 2, ..., 9}), as used by this course to
 # define CR = (lambda_max - n) / (AVG_LAMBDA_MAX[n] - n). Values as given in
-# pcmc_fidelity.py; n=2 is always perfectly consistent (CR=0) and isn't in
+# pcmc.py; n=2 is always perfectly consistent (CR=0) and isn't in
 # the table.
 AVG_LAMBDA_MAX: dict[int, float] = {
     3: 4.049, 4: 6.652, 5: 9.435, 6: 12.245,
@@ -85,7 +85,7 @@ def llsm_weights_incomplete(values: np.ndarray) -> np.ndarray:
     matrix, via the graph-Laplacian linear system: fix the last item as the
     log-weight reference (w_n = 1), solve for the rest, then normalize.
     Works for complete matrices too, but llsm_weights_complete is simpler/faster
-    for that case. Ported from pcmc_fidelity.py's L/RHS construction."""
+    for that case. Ported from pcmc.py's L/RHS construction."""
     n = values.shape[0]
     if n == 1:
         return np.array([1.0])
@@ -124,7 +124,7 @@ def complete_min_cr(
     block-coordinate descent: repeatedly 1D-optimize each missing entry (in
     log-scale, so the reciprocal constraint holds automatically) holding
     every other entry fixed, sweeping through all missing pairs ``sweeps``
-    times. This is the exact scheme pcmc_fidelity.py / PCMC.m uses (fminbnd,
+    times. This is the exact scheme pcmc.py / PCMC.m uses (fminbnd,
     xtol=1e-4, 20 sweeps) — kept unchanged as the course's validated
     algorithm for CR-minimal completion."""
     M = values.copy()
