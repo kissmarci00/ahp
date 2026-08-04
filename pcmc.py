@@ -1,6 +1,4 @@
 """
-PCMC.m sorrol sorra huseg (fidelity) portja Pythonra.
-
 Szandekosan koveti a MATLAB eredetit:
 - globalis valtozok (M, indexi, indexj, HianyzoElemek, ...)
 - fminbound (= MATLAB fminbnd, xtol=1e-4 alapertelmezessel)
