@@ -30,8 +30,8 @@ if len(problem.alternatives) < 2 or not problem.leaf_criteria():
 
 try:
     baseline = compute_hierarchy(problem)
-except pcm_math.DisconnectedMatrixError:
-    st.error(t("common.disconnected_error"))
+except pcm_math.DisconnectedMatrixError as exc:
+    st.error(str(exc))
     st.stop()
 
 
@@ -53,8 +53,8 @@ if len(items) < 2:
 
 try:
     node_result = compute_node_result(problem, group_key)
-except pcm_math.DisconnectedMatrixError:
-    st.error(t("common.disconnected_error"))
+except pcm_math.DisconnectedMatrixError as exc:
+    st.error(str(exc))
     st.stop()
 
 st.divider()
@@ -89,6 +89,8 @@ if cr <= 0.1:
     st.success(cr_label)
 else:
     st.warning(cr_label)
+if not node_result.pcm_result.was_complete:
+    st.caption(t("common.cr_minimal_completion_note"))
 
 st.divider()
 st.subheader(t("step.aggregation_subheader"))

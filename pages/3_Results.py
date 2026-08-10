@@ -22,8 +22,8 @@ if len(problem.alternatives) < 2 or not problem.leaf_criteria():
 
 try:
     result = compute_hierarchy(problem)
-except pcm_math.DisconnectedMatrixError:
-    st.error(t("common.disconnected_error"))
+except pcm_math.DisconnectedMatrixError as exc:
+    st.error(str(exc))
     st.stop()
 
 
@@ -131,6 +131,7 @@ for group_key in [ROOT_KEY] + [c.name for c in problem.criteria]:
         node_result = result.node_results[ROOT_KEY]
         local_weights = node_result.local_weights
         cr = node_result.pcm_result.cr if node_result.pcm_result is not None else None
+        was_complete = node_result.pcm_result is None or node_result.pcm_result.was_complete
     else:
         node = problem.node_by_name(group_key)
         is_leaf = problem.is_leaf(node)
@@ -143,10 +144,12 @@ for group_key in [ROOT_KEY] + [c.name for c in problem.criteria]:
                     st.error(str(exc))
                 continue
             cr = None
+            was_complete = True
         elif group_key in result.node_results:
             node_result = result.node_results[group_key]
             local_weights = node_result.local_weights
             cr = node_result.pcm_result.cr if node_result.pcm_result is not None else None
+            was_complete = node_result.pcm_result is None or node_result.pcm_result.was_complete
         else:
             continue
 
@@ -161,6 +164,8 @@ for group_key in [ROOT_KEY] + [c.name for c in problem.criteria]:
         else:
             cr_icon = "✓" if cr <= 0.1 else "⚠"
             header_cols[1].caption(f"{cr_icon} CR {cr:.4f}")
+            if not was_complete:
+                header_cols[1].caption(t("common.cr_minimal_completion_note"))
         node_df = pd.DataFrame(
             {t("common.item"): list(local_weights.keys()), t("results.local_weight_col"): list(local_weights.values())}
         )

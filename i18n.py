@@ -53,6 +53,10 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "common.cr": {"en": "Consistency ratio (CR)", "hu": "Konzisztencia mutató (CR)"},
     "common.cr_ok": {"en": "acceptable (CR ≤ 0.1)", "hu": "elfogadható (CR ≤ 0,1)"},
     "common.cr_bad": {"en": "too high (CR > 0.1) — consider revising this matrix", "hu": "túl magas (CR > 0,1) — érdemes felülvizsgálni ezt a mátrixot"},
+    "common.cr_minimal_completion_note": {
+        "en": "This is the CR-minimal completion's CR value.",
+        "hu": "Ez a CR-minimális kiegészítés CR-értéke.",
+    },
     "common.disconnected_error": {
         "en": "This matrix's comparison graph is not connected — add more comparisons "
         "so every item is linked, directly or indirectly, to every other.",
@@ -252,11 +256,9 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "step.title": {"en": "Step by Step", "hu": "Lépésről lépésre"},
     "step.caption": {
         "en": "A worked walkthrough of one matrix's calculation, then how its weight "
-        "climbs up the tree into the final ranking. Every number here is computed with "
-        "the exact same functions as the Results page.",
+        "climbs up the tree into the final ranking.",
         "hu": "Egy mátrix számításának részletes levezetése, majd hogy a súlya hogyan "
-        "kerül fel a fán a végső rangsorig. Minden itt szereplő szám ugyanazokkal a "
-        "függvényekkel készül, mint az Eredmények oldalon.",
+        "épül be a fán a végső rangsorba.",
     },
     "step.pick_subheader": {"en": "1. Pick a matrix", "hu": "1. Válasszon egy mátrixot"},
     "step.pick_label": {"en": "Matrix", "hu": "Mátrix"},
@@ -309,12 +311,12 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "'{criterion_name}' szempont súlya {w_low} és {w_high} között van.",
     },
     "sensitivity.no_reversal_at_0": {
-        "en": "No ranking change occurs even all the way down to weight 0.",
-        "hu": "Egészen a 0 súlyig sem következik be rangsorfordulás.",
+        "en": "There is no rank reversal at 0.",
+        "hu": "A 0 értéknél nincs rangsorfordulás.",
     },
     "sensitivity.no_reversal_at_1": {
-        "en": "No ranking change occurs even all the way up to weight 1.",
-        "hu": "Egészen az 1 súlyig sem következik be rangsorfordulás.",
+        "en": "There is no rank reversal at 1.",
+        "hu": "Az 1 értéknél nincs rangsorfordulás.",
     },
     "sensitivity.crossings_caption": {"en": "Ranking-changing crossings within [0, 1]:", "hu": "Rangsorforduló metszéspontok a [0, 1] intervallumban:"},
     "sensitivity.chart_title": {"en": "Sensitivity of '{name}'", "hu": "'{name}' érzékenysége"},
@@ -330,7 +332,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "sensitivity.col_current_weight": {"en": "Current weight", "hu": "Jelenlegi súly"},
     "sensitivity.col_can_decrease_to": {"en": "Can decrease to", "hu": "Csökkenthető eddig"},
     "sensitivity.col_can_increase_to": {"en": "Can increase to", "hu": "Növelhető eddig"},
-    "sensitivity.col_max_change": {"en": "Max. safe change", "hu": "Max. biztonságos változás"},
+    "sensitivity.col_max_change": {"en": "Max. change", "hu": "Max. változás"},
     "sensitivity.unbounded": {"en": "unbounded", "hu": "bármeddig"},
     "sensitivity.most_sensitive": {
         "en": "'{criterion_name}' is the most sensitive: only a change of {max_change} "

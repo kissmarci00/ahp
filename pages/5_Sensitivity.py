@@ -8,6 +8,7 @@ import streamlit as st
 
 from app_state import get_problem, style_download_buttons
 from i18n import t
+from ahp_core import pcm as pcm_math
 from ahp_core import sensitivity as sens_mod
 
 style_download_buttons()
@@ -26,6 +27,9 @@ top_x = st.slider(t("sensitivity.stability_slider"), 1, len(problem.alternatives
 
 try:
     sens = sens_mod.compute_weight_sensitivity(problem, node_name)
+except pcm_math.DisconnectedMatrixError as exc:
+    st.error(str(exc))
+    st.stop()
 except ValueError as exc:
     st.warning(str(exc))
     st.stop()

@@ -230,7 +230,12 @@ with st.container(border=True):
                 st.error(t("problem_setup.crit_name_exists", name=name))
             else:
                 problem.add_criterion(name, parent=parent)
-                st.session_state["ps_selected_node"] = name
+                # Deliberately leave the tree selection where it was (on the
+                # parent just used) rather than jumping to the new node —
+                # so adding several siblings in a row keeps defaulting to
+                # the same level instead of nesting one under the last.
+                # Explicitly selecting a different node (to edit it, or to
+                # add under it next) is what changes that going forward.
                 st.rerun()
 
 save_problem(problem)

@@ -117,7 +117,7 @@ def render_matrix(group_key: str) -> None:
         return
 
     st.markdown(f"**{t('data_entry.pcm_label')}**")
-    by_hand = st.checkbox(t("data_entry.enter_by_hand"), key=f"byhand_{group_key}_{gen}")
+    by_hand = st.checkbox(t("data_entry.enter_by_hand"), value=True, key=f"byhand_{group_key}_{gen}")
     if by_hand:
         st.caption(t("data_entry.enter_by_hand_caption"))
     for i in range(n):
@@ -170,6 +170,8 @@ def render_matrix(group_key: str) -> None:
 
     cr_label = t("common.cr_ok") if result.cr <= 0.1 else t("common.cr_bad")
     st.metric(t("common.cr"), f"{result.cr:.4f}", help=cr_label)
+    if not result.was_complete:
+        st.caption(t("common.cr_minimal_completion_note"))
     weights = result.weights_for(problem.weight_method)
     st.caption(t("data_entry.local_weights_caption"))
     st.dataframe(

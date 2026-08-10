@@ -55,6 +55,46 @@ def direct_group_weights(problem: ProblemData, group_key: str) -> dict[str, floa
     return {name: v / total for name, v in raw.items()}
 
 
+def _matrix_labels(group_key: str) -> tuple[str, str]:
+    if group_key == ROOT_KEY:
+        return "a főszempontok", "the main criteria"
+    return f"„{group_key}”", f"'{group_key}'"
+
+
+def _disconnected_matrix_error(group_keys: list[str]) -> pcm_math.DisconnectedMatrixError:
+    """Build one bilingual error message naming every disconnected matrix at
+    once, rather than only the first one a caller happened to hit."""
+    hu_labels = [_matrix_labels(k)[0] for k in group_keys]
+    en_labels = [_matrix_labels(k)[1] for k in group_keys]
+    if len(group_keys) == 1:
+        message = (
+            f"A(z) {hu_labels[0]} páros összehasonlítás mátrixának reprezentáló gráfja nem "
+            f"összefüggő — adjon meg további összehasonlításokat. / "
+            f"The {en_labels[0]} comparison matrix's graph is not connected — please add "
+            f"more comparisons."
+        )
+    else:
+        message = (
+            f"A következő páros összehasonlítás mátrixok reprezentáló gráfja nem összefüggő: "
+            f"{', '.join(hu_labels)} — adjon meg további összehasonlításokat mindegyiknél. / "
+            f"The comparison graph is not connected for these matrices: {', '.join(en_labels)} "
+            f"— please add more comparisons for each."
+        )
+    return pcm_math.DisconnectedMatrixError(message)
+
+
+def find_disconnected_matrices(problem: ProblemData) -> list[str]:
+    """Every currently-PAIRWISE group (root, non-leaf, or leaf) whose
+    comparison graph isn't connected — lets compute_hierarchy report every
+    problem matrix at once instead of stopping at the first one it visits."""
+    disconnected = []
+    for group_key in problem.all_pcm_group_keys():
+        matrix = problem.matrix_for(group_key)
+        if matrix.size() >= 2 and not pcm_math.is_connected(matrix.values):
+            disconnected.append(group_key)
+    return disconnected
+
+
 def compute_node_result(
     problem: ProblemData, group_key: str, override: dict[str, float] | None = None
 ) -> NodeResult:
@@ -71,7 +111,10 @@ def compute_node_result(
         local = direct_group_weights(problem, group_key)
         return NodeResult(group_key=group_key, items=items, local_weights=local, pcm_result=None)
     matrix = problem.matrix_for(group_key)
-    result = pcm_math.solve(matrix.values)
+    try:
+        result = pcm_math.solve(matrix.values)
+    except pcm_math.DisconnectedMatrixError:
+        raise _disconnected_matrix_error([group_key]) from None
     weights = result.weights_for(problem.weight_method)
     return NodeResult(
         group_key=group_key, items=matrix.items,
@@ -119,6 +162,10 @@ def compute_hierarchy(
     solving its PCM — used by sensitivity.py to ask "what if this node's
     local weight were exactly w instead of whatever its PCM says", without
     duplicating the aggregation logic below."""
+    disconnected = find_disconnected_matrices(problem)
+    if disconnected:
+        raise _disconnected_matrix_error(disconnected)
+
     overrides = overrides or {}
     node_results: dict[str, NodeResult] = {}
 
