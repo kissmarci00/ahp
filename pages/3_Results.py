@@ -97,15 +97,13 @@ st.plotly_chart(
 )
 
 leaf_weights_df = pd.DataFrame(
-    {"Global weight": result.leaf_weights}
-).sort_values("Global weight", ascending=False)
+    {t("results.weight_col"): result.leaf_weights}
+).sort_values(t("results.weight_col"), ascending=False)
 # Display copy with the criterion name as a plain column rather than the
 # DataFrame index — st.dataframe doesn't reliably widen the index column to
 # fit longer names, silently truncating them; a regular column sizes
 # correctly. leaf_weights_df itself (index intact) is still what's exported.
-leaf_weights_display = leaf_weights_df.reset_index(names=t("common.item")).rename(
-    columns={"Global weight": t("results.weight_col")}
-)
+leaf_weights_display = leaf_weights_df.reset_index(names=t("common.item"))
 st.dataframe(
     leaf_weights_display.style.format({t("results.weight_col"): "{:.4f}"}), width="stretch", hide_index=True,
 )
@@ -153,8 +151,14 @@ for group_key in [ROOT_KEY] + [c.name for c in problem.criteria]:
         else:
             continue
 
+    cr_note = t("common.cr_minimal_completion_note") if (cr is not None and not was_complete) else ""
     for item, weight in local_weights.items():
-        rows.append({"Group": _group_label(group_key), "Item": item, "Local weight": weight, "CR": cr})
+        rows.append(
+            {
+                t("results.col_group"): _group_label(group_key), t("common.item"): item,
+                t("results.local_weight_col"): weight, "CR": cr, t("results.col_note"): cr_note,
+            }
+        )
 
     with st.container(border=True):
         header_cols = st.columns([4, 1])
@@ -180,11 +184,14 @@ st.download_button(
     t("results.download_results"),
     data=export_tables_to_excel(
         [
-            ("Node weights", node_weights_df.set_index("Item"), "Local weights & CR, by node", None),
-            ("Leaf weights", leaf_weights_df, "Global leaf-criterion weights", None),
             (
-                "Scores", scores_df.set_index(t("results.rank_col")), "Alternative total scores & ranking",
-                [("Ranking", " > ".join(result.ranking))],
+                t("results.sheet_node_weights"), node_weights_df.set_index(t("common.item")),
+                t("results.node_weights_subheader"), None,
+            ),
+            (t("results.sheet_leaf_weights"), leaf_weights_df, t("results.leaf_weights_subheader"), None),
+            (
+                t("results.sheet_scores"), scores_df.set_index(t("results.rank_col")), t("results.scores_subheader"),
+                [(t("results.ranking_label"), " > ".join(result.ranking))],
             ),
         ],
         number_format="0.0000",

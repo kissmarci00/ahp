@@ -9,9 +9,10 @@ a connected comparison graph, "stabilitási intervallum" for a sensitivity
 stability interval.
 
 Same scope and exceptions as the PROMETHEE Playground's i18n.py: page chrome
-only (titles, captions, labels, buttons, alerts). Plotly figure content and
-Excel export content stay in English regardless of the selected language, so
-a saved image/file always reads the same. ahp_core exception messages are
+only (titles, captions, labels, buttons, alerts). The Results page's Excel
+export (sheet names, titles, column headers) follows the selected language
+like everything else — deliberately, so a file downloaded in Hungarian
+reads as Hungarian throughout, not a mix. ahp_core exception messages are
 bilingual inline (that package has no i18n dependency of its own), so pages
 show them as-is.
 """
@@ -251,6 +252,12 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "en": "**{winner}** wins. Final ranking: {ranking}.", "hu": "**{winner}** nyer. Végső rangsor: {ranking}.",
     },
     "results.download_results": {"en": "Download results (.xlsx)", "hu": "Eredmények letöltése (.xlsx)"},
+    "results.col_group": {"en": "Group", "hu": "Csoport"},
+    "results.col_note": {"en": "Note", "hu": "Megjegyzés"},
+    "results.ranking_label": {"en": "Ranking", "hu": "Rangsor"},
+    "results.sheet_node_weights": {"en": "Node weights", "hu": "Csúcssúlyok"},
+    "results.sheet_leaf_weights": {"en": "Leaf weights", "hu": "Levélsúlyok"},
+    "results.sheet_scores": {"en": "Scores", "hu": "Pontszámok"},
 
     # -- step by step -----------------------------------------------------------------
     "step.title": {"en": "Step by Step", "hu": "Lépésről lépésre"},
