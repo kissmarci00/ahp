@@ -28,15 +28,21 @@ if len(problem.alternatives) < 2 or not problem.leaf_criteria():
     st.info(t("common.need_2alt_1crit"))
     st.stop()
 
+def _group_label(group_key: str) -> str:
+    return t("common.main_criteria") if group_key == ROOT_KEY else group_key
+
+
+def _disconnected_message(exc: pcm_math.DisconnectedMatrixError) -> str:
+    if exc.group_keys:
+        return t("common.disconnected_error_named", names=", ".join(_group_label(k) for k in exc.group_keys))
+    return t("common.disconnected_error")
+
+
 try:
     baseline = compute_hierarchy(problem)
 except pcm_math.DisconnectedMatrixError as exc:
-    st.error(str(exc))
+    st.error(_disconnected_message(exc))
     st.stop()
-
-
-def _group_label(group_key: str) -> str:
-    return t("common.main_criteria") if group_key == ROOT_KEY else group_key
 
 
 st.divider()
@@ -54,7 +60,7 @@ if len(items) < 2:
 try:
     node_result = compute_node_result(problem, group_key)
 except pcm_math.DisconnectedMatrixError as exc:
-    st.error(str(exc))
+    st.error(_disconnected_message(exc))
     st.stop()
 
 st.divider()

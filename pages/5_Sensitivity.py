@@ -10,10 +10,22 @@ from app_state import get_problem, style_download_buttons
 from i18n import t
 from ahp_core import pcm as pcm_math
 from ahp_core import sensitivity as sens_mod
+from ahp_core.model import ROOT_KEY
 
 style_download_buttons()
 st.title(t("sensitivity.title"))
 st.caption(t("sensitivity.caption"))
+
+
+def _group_label(group_key: str) -> str:
+    return t("common.main_criteria") if group_key == ROOT_KEY else group_key
+
+
+def _disconnected_message(exc: pcm_math.DisconnectedMatrixError) -> str:
+    if exc.group_keys:
+        return t("common.disconnected_error_named", names=", ".join(_group_label(k) for k in exc.group_keys))
+    return t("common.disconnected_error")
+
 
 problem = get_problem()
 eligible = sens_mod.sensitivity_eligible_nodes(problem)
@@ -28,7 +40,7 @@ top_x = st.slider(t("sensitivity.stability_slider"), 1, len(problem.alternatives
 try:
     sens = sens_mod.compute_weight_sensitivity(problem, node_name)
 except pcm_math.DisconnectedMatrixError as exc:
-    st.error(str(exc))
+    st.error(_disconnected_message(exc))
     st.stop()
 except ValueError as exc:
     st.warning(str(exc))

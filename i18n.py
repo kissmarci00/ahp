@@ -56,7 +56,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "common.cr_bad": {"en": "too high (CR > 0.1) — consider revising this matrix", "hu": "túl magas (CR > 0,1) — érdemes felülvizsgálni ezt a mátrixot"},
     "common.cr_minimal_completion_note": {
         "en": "This is the CR-minimal completion's CR value.",
-        "hu": "Ez a CR-minimális kiegészítés CR-értéke.",
+        "hu": "Ez a CR-minimális kitöltés CR-értéke.",
     },
     "common.disconnected_error": {
         "en": "This matrix's comparison graph is not connected — add more comparisons "
@@ -64,6 +64,11 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "hu": "Ennek a mátrixnak a reprezentáló gráfja nem összefüggő — adjon meg további "
         "összehasonlításokat, hogy minden elem közvetlenül vagy közvetve össze legyen "
         "hasonlítva minden másikkal.",
+    },
+    "common.disconnected_error_named": {
+        "en": "The comparison graph is not connected for: {names} — please add more comparisons.",
+        "hu": "A következő mátrix(ok) reprezentáló gráfja nem összefüggő: {names} — adjon meg "
+        "további összehasonlításokat.",
     },
     "common.main_criteria": {"en": "Main criteria", "hu": "Főszempontok"},
     "common.root_breadcrumb": {"en": "(main criteria)", "hu": "(főszempontok)"},
@@ -340,7 +345,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "sensitivity.col_can_decrease_to": {"en": "Can decrease to", "hu": "Csökkenthető eddig"},
     "sensitivity.col_can_increase_to": {"en": "Can increase to", "hu": "Növelhető eddig"},
     "sensitivity.col_max_change": {"en": "Max. change", "hu": "Max. változás"},
-    "sensitivity.unbounded": {"en": "unbounded", "hu": "bármeddig"},
+    "sensitivity.unbounded": {"en": "no rank reversal", "hu": "bármeddig"},
     "sensitivity.most_sensitive": {
         "en": "'{criterion_name}' is the most sensitive: only a change of {max_change} "
         "flips the top-{top_x} ranking.",

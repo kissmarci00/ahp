@@ -62,8 +62,11 @@ def _matrix_labels(group_key: str) -> tuple[str, str]:
 
 
 def _disconnected_matrix_error(group_keys: list[str]) -> pcm_math.DisconnectedMatrixError:
-    """Build one bilingual error message naming every disconnected matrix at
-    once, rather than only the first one a caller happened to hit."""
+    """Build one bilingual fallback error message naming every disconnected
+    matrix at once, rather than only the first one a caller happened to hit.
+    The exception also carries ``group_keys`` itself (raw, unlocalized) so a
+    page can build a single-language message via i18n instead of using this
+    bilingual text — see DisconnectedMatrixError's docstring."""
     hu_labels = [_matrix_labels(k)[0] for k in group_keys]
     en_labels = [_matrix_labels(k)[1] for k in group_keys]
     if len(group_keys) == 1:
@@ -80,7 +83,7 @@ def _disconnected_matrix_error(group_keys: list[str]) -> pcm_math.DisconnectedMa
             f"The comparison graph is not connected for these matrices: {', '.join(en_labels)} "
             f"— please add more comparisons for each."
         )
-    return pcm_math.DisconnectedMatrixError(message)
+    return pcm_math.DisconnectedMatrixError(message, group_keys=group_keys)
 
 
 def find_disconnected_matrices(problem: ProblemData) -> list[str]:

@@ -20,15 +20,18 @@ if len(problem.alternatives) < 2 or not problem.leaf_criteria():
     st.info(t("common.need_2alt_1crit"))
     st.stop()
 
+def _group_label(group_key: str) -> str:
+    return t("common.main_criteria") if group_key == ROOT_KEY else group_key
+
+
 try:
     result = compute_hierarchy(problem)
 except pcm_math.DisconnectedMatrixError as exc:
-    st.error(str(exc))
+    if exc.group_keys:
+        st.error(t("common.disconnected_error_named", names=", ".join(_group_label(k) for k in exc.group_keys)))
+    else:
+        st.error(t("common.disconnected_error"))
     st.stop()
-
-
-def _group_label(group_key: str) -> str:
-    return t("common.main_criteria") if group_key == ROOT_KEY else group_key
 
 
 # -- publishable style tokens (fixed light "paper" surface, independent of the

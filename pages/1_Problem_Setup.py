@@ -86,6 +86,23 @@ selected = render_tree_selector(
 is_root_selected = selected == ROOT_KEY
 is_real_node = selected is not None and selected != ROOT_KEY
 
+# Sticky "where to add the next criterion" memory — tracked explicitly in
+# its own session-state key rather than derived from `selected` on every
+# run, so a successful add reliably keeps defaulting to the same parent for
+# the next one (letting you add several siblings in a row without having to
+# reset the Parent dropdown each time), regardless of exactly how Streamlit
+# preserves (or doesn't) other widget state across a rerun. Synced to
+# `selected` on normal runs — so picking a different node to edit also
+# updates where the next add defaults to, matching the Add panel's own
+# "under X" heading — except for exactly the one rerun right after an add,
+# where the add form below has already set this explicitly and it shouldn't
+# be second-guessed.
+if st.session_state.pop("ps_just_added_criterion", False):
+    pass
+else:
+    st.session_state["ps_add_parent"] = selected if is_real_node else ROOT_KEY
+add_parent = st.session_state.get("ps_add_parent", ROOT_KEY)
+
 mode_options = list(EvalMode)
 mode_labels = {
     EvalMode.PAIRWISE: t("common.eval_mode_pairwise"), EvalMode.DIRECT: t("common.eval_mode_direct"),
@@ -204,9 +221,8 @@ with st.container(border=True):
         st.caption(t("problem_setup.edit_node_placeholder"))
 
 st.write("")
-default_parent = selected if is_real_node else None
 add_header = (
-    t("problem_setup.add_subcriterion_under", parent=selected) if is_real_node
+    t("problem_setup.add_subcriterion_under", parent=add_parent) if add_parent != ROOT_KEY
     else t("problem_setup.add_criterion")
 )
 with st.container(border=True):
@@ -215,10 +231,9 @@ with st.container(border=True):
         cols = st.columns([3, 3])
         name = cols[0].text_input(t("common.name"))
         parent_options = [ROOT_KEY] + [c.name for c in problem.criteria]
-        default_parent_option = default_parent if default_parent is not None else ROOT_KEY
         parent_option = cols[1].selectbox(
             t("problem_setup.parent"), parent_options,
-            index=parent_options.index(default_parent_option) if default_parent_option in parent_options else 0,
+            index=parent_options.index(add_parent) if add_parent in parent_options else 0,
             format_func=lambda p: t("problem_setup.parent_top_level") if p == ROOT_KEY else p,
         )
         parent = None if parent_option == ROOT_KEY else parent_option
@@ -230,12 +245,14 @@ with st.container(border=True):
                 st.error(t("problem_setup.crit_name_exists", name=name))
             else:
                 problem.add_criterion(name, parent=parent)
-                # Deliberately leave the tree selection where it was (on the
-                # parent just used) rather than jumping to the new node —
-                # so adding several siblings in a row keeps defaulting to
-                # the same level instead of nesting one under the last.
-                # Explicitly selecting a different node (to edit it, or to
-                # add under it next) is what changes that going forward.
+                # Explicitly remember the parent just used (rather than
+                # relying on `selected` staying put across this rerun) so
+                # adding several siblings in a row keeps defaulting to the
+                # same level instead of nesting one under the last. Picking
+                # a different node to edit is what changes this going
+                # forward — see the sync above.
+                st.session_state["ps_add_parent"] = parent_option
+                st.session_state["ps_just_added_criterion"] = True
                 st.rerun()
 
 save_problem(problem)

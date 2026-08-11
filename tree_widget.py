@@ -83,7 +83,7 @@ def layout_tree(problem: ProblemData) -> dict[str, tuple[float, float]]:
     return positions
 
 
-MARKER_SIZE = 128
+MARKER_SIZE = 110
 X_GAP = 1.85  # spacing multiplier between siblings, so labels + subtitle have room to breathe
 
 
@@ -126,7 +126,7 @@ def build_tree_figure(
             if badge:
                 root_lines.append(badge)
             label = f"<b>{_wrap_label(goal_label, max_len=16)}</b>"
-            label += "<br>" + "<br>".join(f"<span style='font-size:9px'>{line}</span>" for line in root_lines)
+            label += "<br>" + "<br>".join(f"<span style='font-size:8px'>{line}</span>" for line in root_lines)
             labels.append(label)
             hover_texts.append(goal_label)
             continue
@@ -136,18 +136,25 @@ def build_tree_figure(
         extra_lines = _node_subtitle_lines(problem, node) + ([badge] if badge else [])
         label = f"<b>{_wrap_label(n)}</b>"
         if extra_lines:
-            label += "<br>" + "<br>".join(f"<span style='font-size:9px'>{line}</span>" for line in extra_lines)
+            label += "<br>" + "<br>".join(f"<span style='font-size:8px'>{line}</span>" for line in extra_lines)
         labels.append(label)
         hover_texts.append(n)
 
     fig.add_trace(
         go.Scatter(
             x=xs, y=ys, mode="markers+text", text=labels, textposition="middle center",
-            textfont=dict(size=13, color="white"),
+            textfont=dict(size=11, color="white"),
             marker=dict(
                 symbol="square", size=MARKER_SIZE, color=colors,
                 line=dict(color=line_colors, width=line_widths),
             ),
+            # Markers are a *fixed pixel size*, but the axis range is in data
+            # units — on a narrower browser window the same data-unit padding
+            # covers fewer pixels, so the edge boxes (whose centers sit right
+            # at x_min/x_max) get their far half clipped by the plot area.
+            # cliponaxis=False lets them render into the margin instead of
+            # being cut off, independent of how narrow the container gets.
+            cliponaxis=False,
             customdata=names, hovertext=hover_texts, hovertemplate="%{hovertext}<extra></extra>",
             showlegend=False,
         )
@@ -162,7 +169,12 @@ def build_tree_figure(
     # lines) gets clipped by the plot's top edge.
     fig.update_yaxes(visible=False, showgrid=False, zeroline=False, range=[-max_depth - 0.6, 0.6])
     fig.update_layout(
-        margin=dict(l=10, r=10, t=20, b=10),
+        # Modest fixed-pixel margins (on top of cliponaxis=False above) —
+        # just enough headroom for a corner marker's overflow. Much bigger
+        # margins would eat into the plot's own inner width, which on a
+        # narrow container makes the (fixed-pixel-size) markers cover *more*
+        # of the shrunken data range and start overlapping their neighbors.
+        margin=dict(l=30, r=30, t=40, b=30),
         height=min(800, max(400, 210 * (max_depth + 1))),
         clickmode="event+select",
         dragmode=False,

@@ -31,7 +31,18 @@ MAX_SUPPORTED_SIZE = max(AVG_LAMBDA_MAX)
 
 class DisconnectedMatrixError(Exception):
     """Raised when a PCM's comparison graph is not connected (GUI spec item 24:
-    "Hibaüzenet, ha egy mátrixhoz tartozó reprezentáló gráf nem összefüggő")."""
+    "Hibaüzenet, ha egy mátrixhoz tartozó reprezentáló gráf nem összefüggő").
+
+    ``group_keys`` — which matrices are disconnected — is set by hierarchy.py
+    when it knows that context, so a caller with access to i18n (a page) can
+    build a properly localized message instead of falling back to this
+    exception's own bilingual ``str()``, which pcm.py has to provide since it
+    has no i18n dependency of its own and doesn't know which group a bare
+    matrix belongs to."""
+
+    def __init__(self, message: str, group_keys: list[str] | None = None) -> None:
+        super().__init__(message)
+        self.group_keys = group_keys
 
 
 def is_connected(values: np.ndarray) -> bool:
