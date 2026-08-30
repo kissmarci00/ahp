@@ -2,12 +2,9 @@
 method, the LLSM (logarithmic least squares / geometric mean) method, the CR
 consistency index, and the not-fully-filled-in extensions of all of these.
 
-This is a clean, global-variable-free port of pcmc.py (itself a
-line-by-line port of the course's PCMC.m). The numerical algorithms —
-notably the CR-minimal completion by 20 sweeps of single-entry fminbound
-optimization, and the graph-Laplacian closed form for incomplete LLSM — are
-kept exactly as validated there; only the plumbing (globals -> parameters,
-explicit connectivity check) has changed. 
+The numerical algorithms — notably the CR-minimal completion by 20 sweeps of
+single-entry fminbound optimization, and the graph-Laplacian closed form for
+incomplete LLSM — follow the standard AHP formulations for these methods.
 """
 from __future__ import annotations
 
@@ -17,10 +14,9 @@ import numpy as np
 from scipy.optimize import fminbound
 
 # Average lambda_max of random n x n reciprocal matrices (entries drawn
-# uniformly from {1/9, ..., 1/2, 1, 2, ..., 9}), as used by this course to
-# define CR = (lambda_max - n) / (AVG_LAMBDA_MAX[n] - n). Values as given in
-# pcmc.py; n=2 is always perfectly consistent (CR=0) and isn't in
-# the table.
+# uniformly from {1/9, ..., 1/2, 1, 2, ..., 9}), used to define
+# CR = (lambda_max - n) / (AVG_LAMBDA_MAX[n] - n). n=2 is always perfectly
+# consistent (CR=0) and isn't in the table.
 AVG_LAMBDA_MAX: dict[int, float] = {
     3: 4.049, 4: 6.652, 5: 9.435, 6: 12.245,
     7: 15.045, 8: 17.830, 9: 20.605, 10: 23.373,
@@ -30,15 +26,13 @@ MAX_SUPPORTED_SIZE = max(AVG_LAMBDA_MAX)
 
 
 class DisconnectedMatrixError(Exception):
-    """Raised when a PCM's comparison graph is not connected (GUI spec item 24:
-    "Hibaüzenet, ha egy mátrixhoz tartozó reprezentáló gráf nem összefüggő").
+    """Raised when a PCM's comparison graph is not connected, so a weight
+    vector can't be recovered.
 
-    ``group_keys`` — which matrices are disconnected — is set by hierarchy.py
-    when it knows that context, so a caller with access to i18n (a page) can
-    build a properly localized message instead of falling back to this
-    exception's own bilingual ``str()``, which pcm.py has to provide since it
-    has no i18n dependency of its own and doesn't know which group a bare
-    matrix belongs to."""
+    ``group_keys`` (which matrices are disconnected) is set by hierarchy.py,
+    so a page can build a localized message instead of using this
+    exception's own bilingual ``str()`` — pcm.py has no i18n dependency and
+    doesn't know which group a bare matrix belongs to."""
 
     def __init__(self, message: str, group_keys: list[str] | None = None) -> None:
         super().__init__(message)
@@ -47,9 +41,7 @@ class DisconnectedMatrixError(Exception):
 
 def is_connected(values: np.ndarray) -> bool:
     """Whether the comparison graph (an edge wherever an entry is known) is
-    connected — i.e. every item is directly or indirectly compared to every
-    other. NemTeljesenKitoltott.pdf: exactly the condition under which a
-    unique weight vector can be recovered at all."""
+    connected — the condition for a unique weight vector to exist."""
     n = values.shape[0]
     if n <= 1:
         return True
@@ -82,7 +74,7 @@ def eigenvector_weights(values: np.ndarray) -> tuple[np.ndarray, float]:
 
 def llsm_weights_complete(values: np.ndarray) -> np.ndarray:
     """Closed-form LLSM solution for a fully completed matrix: each weight is
-    the geometric mean of its row, normalized to sum to 1 (AHP.pdf)."""
+    the geometric mean of its row, normalized to sum to 1."""
     n = values.shape[0]
     row_products = np.prod(values, axis=1)
     w = row_products ** (1.0 / n)
@@ -94,7 +86,7 @@ def llsm_weights_incomplete(values: np.ndarray) -> np.ndarray:
     matrix, via the graph-Laplacian linear system: fix the last item as the
     log-weight reference (w_n = 1), solve for the rest, then normalize.
     Works for complete matrices too, but llsm_weights_complete is simpler/faster
-    for that case. Ported from pcmc.py's L/RHS construction."""
+    for that case."""
     n = values.shape[0]
     if n == 1:
         return np.array([1.0])
@@ -161,11 +153,9 @@ def cr_value(lambda_max: float, n: int) -> float:
             f"No average-lambda-max reference value for a {n}x{n} matrix "
             f"(supported sizes: 3-{MAX_SUPPORTED_SIZE})."
         )
-    # By Perron-Frobenius, lambda_max >= n always for a positive reciprocal
-    # matrix, with equality exactly at perfect consistency — so CR is
-    # mathematically never negative. A tiny negative value here is only ever
-    # eigenvalue-solver floating-point noise (e.g. lambda_max landing at
-    # n - 1e-16), which would otherwise display as a confusing "-0.0000".
+    # lambda_max >= n always (Perron-Frobenius), so CR is never negative in
+    # theory; clamp floating-point noise near perfect consistency so it
+    # doesn't display as "-0.0000".
     return max(0.0, (lambda_max - n) / (AVG_LAMBDA_MAX[n] - n))
 
 

@@ -1,20 +1,15 @@
-"""Weight stability-interval sensitivity analysis, generalized from the
-PROMETHEE Playground's flat-criteria model (promethee_core/sensitivity.py)
-to AHP's criteria tree.
+"""Weight stability-interval sensitivity analysis for AHP's criteria tree.
 
-Any node X with at least one sibling can be studied: as X's *local* weight
-within its parent P varies from 0 to 1 (its siblings rescaled proportionally
-so they still sum to 1-w), every alternative's total score T_i turns out to
-again be an *affine* function of w:
+For a node X with at least one sibling, as X's local weight within its
+parent P varies from 0 to 1 (siblings rescaled to still sum to 1-w), every
+alternative's total score T_i is an affine function of w:
 
     T_i(w) = (1 - w) * C_i + w * D_i
 
-exactly as in the flat PROMETHEE case — D_i is T_i with X given all of P's
-weight (siblings zeroed), C_i is T_i with X given none of it (siblings
-absorb its share, renormalized among themselves). Both are computed by
-literally re-running compute_hierarchy with X's parent's local-weight
-vector forced to that extreme (see ``overrides`` on compute_hierarchy) —
-reusing the exact aggregation logic rather than re-deriving it.
+D_i is T_i with X given all of P's weight; C_i is T_i with X given none
+(siblings absorb its share). Both come from re-running compute_hierarchy
+with the parent's local weights forced to that extreme (``overrides``),
+reusing its aggregation logic instead of re-deriving it.
 """
 from __future__ import annotations
 
@@ -81,17 +76,15 @@ def _crossing(C_i: float, D_i: float, C_j: float, D_j: float) -> float | None:
 
 
 def sensitivity_eligible_nodes(problem: ProblemData) -> list[str]:
-    """Every criterion (leaf or not) that has at least one sibling — i.e. a
-    node whose weight can meaningfully vary while something else absorbs the
-    difference."""
+    """Every criterion with at least one sibling to redistribute weight
+    with."""
     return [c.name for c in problem.criteria if len(problem.children(c.parent)) >= 2]
 
 
 def compute_weight_sensitivity(problem: ProblemData, node_name: str) -> WeightSensitivity:
     """Build the weight-sensitivity model for one criterion node from the
-    problem's current state. Raises ValueError for the same kind of
-    degenerate cases the PROMETHEE version guards against (no room to
-    redistribute weight)."""
+    problem's current state. Raises ValueError for degenerate cases with no
+    room to redistribute weight."""
     node = problem.node_by_name(node_name)
     parent_key = node.parent if node.parent is not None else ROOT_KEY
     siblings = problem.children(node.parent)

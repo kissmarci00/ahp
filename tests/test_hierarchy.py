@@ -1,4 +1,4 @@
-"""Weight aggregation and total-score computation, using the AHP.pdf car
+"""Weight aggregation and total-score computation, using the car-choice
 example (ahp_core/sample.py) as the reference problem."""
 from __future__ import annotations
 

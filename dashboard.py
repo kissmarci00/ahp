@@ -1,8 +1,7 @@
 """AHP Playground — app entrypoint: sidebar language switcher and page routing.
 
 Uses st.navigation/st.Page (rather than the implicit pages/ auto-discovery)
-so the sidebar's page labels themselves can be translated — mirrors the
-PROMETHEE Playground's dashboard.py.
+so the sidebar's page labels themselves can be translated.
 """
 import streamlit as st
 

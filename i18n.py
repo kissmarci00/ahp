@@ -1,20 +1,16 @@
 """English/Hungarian text for every Streamlit page's UI chrome.
 
-Hungarian terminology follows this course's reference material (AHP.pdf and
-NemTeljesenKitoltott.pdf) exactly — "szempont" for criterion, "levélszempont"
-for leaf criterion, "páros összehasonlítás mátrix" for the PCM, "sajátvektor
-módszer" / "LLSM (mértani közép) módszer" for the two weight-vector methods,
-"konzisztencia mutató (CR)" for the consistency ratio, "összefüggő gráf" for
-a connected comparison graph, "stabilitási intervallum" for a sensitivity
-stability interval.
+Hungarian terminology: "szempont" (criterion), "levélszempont" (leaf
+criterion), "páros összehasonlítás mátrix" (PCM), "sajátvektor módszer" /
+"LLSM (mértani közép) módszer" (the two weight-vector methods),
+"konzisztencia mutató (CR)" (consistency ratio), "összefüggő gráf"
+(connected comparison graph), "stabilitási intervallum" (stability
+interval).
 
-Same scope and exceptions as the PROMETHEE Playground's i18n.py: page chrome
-only (titles, captions, labels, buttons, alerts). The Results page's Excel
-export (sheet names, titles, column headers) follows the selected language
-like everything else — deliberately, so a file downloaded in Hungarian
-reads as Hungarian throughout, not a mix. ahp_core exception messages are
-bilingual inline (that package has no i18n dependency of its own), so pages
-show them as-is.
+Scope: page chrome only. The Results page's Excel export follows the
+selected language too, so a downloaded file reads as one language
+throughout. ahp_core exception messages are bilingual inline (no i18n
+dependency of their own), so pages show them as-is.
 """
 from __future__ import annotations
 
@@ -204,7 +200,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "data_entry.saaty_missing_option": {"en": "? (not entered)", "hu": "? (nincs megadva)"},
     "data_entry.missing_checkbox": {"en": "not entered", "hu": "nincs megadva"},
     "data_entry.pcm_label": {"en": "Pairwise comparison matrix:", "hu": "Páros összehasonlítás mátrix:"},
-    "data_entry.enter_by_hand": {"en": "Enter exact ratios by hand", "hu": "Pontos arányok kézi megadása"},
+    "data_entry.use_saaty_scale": {"en": "Use Saaty's 1-9 scale", "hu": "Saaty-féle 1-9 skála használata"},
     "data_entry.enter_by_hand_caption": {
         "en": "Type any positive ratio (not just Saaty's 1-9 scale) — e.g. 2.5 means the first "
         "item is 2.5 times more important/preferred than the second.",

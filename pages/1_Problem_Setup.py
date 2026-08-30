@@ -86,32 +86,19 @@ selected = render_tree_selector(
 is_root_selected = selected == ROOT_KEY
 is_real_node = selected is not None and selected != ROOT_KEY
 
-# Sticky "where to add the next criterion" memory — tracked explicitly in
-# its own session-state key rather than derived from `selected` on every
-# run, so a successful add reliably keeps defaulting to the same parent for
-# the next one (letting you add several siblings in a row without having to
-# reset the Parent dropdown each time), regardless of exactly how Streamlit
-# preserves (or doesn't) other widget state across a rerun. Synced to
-# `selected` on normal runs — so picking a different node to edit also
-# updates where the next add defaults to, matching the Add panel's own
-# "under X" heading — except for exactly the one rerun right after an add,
-# where the add form below has already set this explicitly and it shouldn't
-# be second-guessed.
-if st.session_state.pop("ps_just_added_criterion", False):
-    pass
-else:
-    st.session_state["ps_add_parent"] = selected if is_real_node else ROOT_KEY
-add_parent = st.session_state.get("ps_add_parent", ROOT_KEY)
+# The next criterion's default parent is just whatever's selected on the
+# tree — no separate state. After a successful add, the form below moves
+# the selection to the parent just used, so consecutive adds keep landing
+# on the same level.
+add_parent = selected if is_real_node else ROOT_KEY
 
 mode_options = list(EvalMode)
 mode_labels = {
     EvalMode.PAIRWISE: t("common.eval_mode_pairwise"), EvalMode.DIRECT: t("common.eval_mode_direct"),
 }
 
-# Three clearly separated actions — editing the goal/root, editing the
-# selected criterion (name, parent, eval mode, and its own delete button),
-# or adding a brand-new one — each in its own bordered, titled box, rather
-# than a single undifferentiated stack of widgets.
+# Three actions, each in its own bordered box: edit the root, edit the
+# selected criterion, or add a new one.
 with st.container(border=True):
     if is_root_selected:
         st.markdown(f"##### {t('problem_setup.edit_root_header')}")
@@ -152,20 +139,13 @@ with st.container(border=True):
         )
         new_parent = None if new_parent_option == ROOT_KEY else new_parent_option
 
-        # Every field here is tracked so the tree diagram (drawn *above* this
-        # panel) can redraw immediately with the fresh name/mode state,
-        # instead of only catching up on the user's *next* interaction — the
-        # diagram is unavoidably built before this panel's edits are known, so
-        # without an explicit rerun-on-change it always lags one step behind.
+        # Tracked so a rerun can redraw the tree diagram (built above this
+        # panel) with fresh state immediately, instead of lagging one step
+        # behind.
         changed = False
 
-        # Same three-column scaffold and vertical radio style regardless of
-        # leaf/non-leaf — only a leaf actually uses the direction/color
-        # columns (a non-leaf's mode is how it weighs its *children*, AHP.pdf's
-        # "közvetlen súlyozás" being a valid alternative to pairwise
-        # comparison for weighing criteria too, not just — GUI spec item 35 —
-        # for scoring alternatives on a leaf; direction/color only ever apply
-        # to a leaf's own alternatives).
+        # Same layout for leaf/non-leaf; only a leaf uses the direction/color
+        # columns (a non-leaf's mode weighs its children instead).
         mode_cols = st.columns(3)
         new_mode = mode_cols[0].radio(
             t("common.eval_mode"), mode_options, index=mode_options.index(node.eval_mode),
@@ -221,21 +201,26 @@ with st.container(border=True):
         st.caption(t("problem_setup.edit_node_placeholder"))
 
 st.write("")
-add_header = (
-    t("problem_setup.add_subcriterion_under", parent=add_parent) if add_parent != ROOT_KEY
-    else t("problem_setup.add_criterion")
-)
 with st.container(border=True):
+    parent_options = [ROOT_KEY] + [c.name for c in problem.criteria]
+    # Outside the form below: a plain selectbox reruns the page on change,
+    # so the header right under it updates immediately instead of only
+    # catching up when the form is submitted.
+    parent_option = st.selectbox(
+        t("problem_setup.parent"), parent_options,
+        index=parent_options.index(add_parent) if add_parent in parent_options else 0,
+        format_func=lambda p: t("problem_setup.parent_top_level") if p == ROOT_KEY else p,
+        # Key varies with add_parent — otherwise Streamlit won't re-apply
+        # `index` on a rerun where the widget already exists.
+        key=f"add_crit_parent_{gen}_{add_parent}",
+    )
+    add_header = (
+        t("problem_setup.add_subcriterion_under", parent=parent_option) if parent_option != ROOT_KEY
+        else t("problem_setup.add_criterion")
+    )
     st.markdown(f"##### {add_header}")
     with st.form("add_criterion_form", clear_on_submit=True):
-        cols = st.columns([3, 3])
-        name = cols[0].text_input(t("common.name"))
-        parent_options = [ROOT_KEY] + [c.name for c in problem.criteria]
-        parent_option = cols[1].selectbox(
-            t("problem_setup.parent"), parent_options,
-            index=parent_options.index(add_parent) if add_parent in parent_options else 0,
-            format_func=lambda p: t("problem_setup.parent_top_level") if p == ROOT_KEY else p,
-        )
+        name = st.text_input(t("common.name"))
         parent = None if parent_option == ROOT_KEY else parent_option
         submitted = st.form_submit_button(t("common.add"))
         if submitted:
@@ -245,14 +230,9 @@ with st.container(border=True):
                 st.error(t("problem_setup.crit_name_exists", name=name))
             else:
                 problem.add_criterion(name, parent=parent)
-                # Explicitly remember the parent just used (rather than
-                # relying on `selected` staying put across this rerun) so
-                # adding several siblings in a row keeps defaulting to the
-                # same level instead of nesting one under the last. Picking
-                # a different node to edit is what changes this going
-                # forward — see the sync above.
-                st.session_state["ps_add_parent"] = parent_option
-                st.session_state["ps_just_added_criterion"] = True
+                # Keep the tree selection on the parent just used, so the
+                # next add defaults to the same level.
+                st.session_state["ps_selected_node"] = parent_option
                 st.rerun()
 
 save_problem(problem)

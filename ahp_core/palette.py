@@ -3,9 +3,6 @@
 Eight hues ordered for maximum adjacent colorblind-safe separation. Used as
 the fallback whenever an alternative or criterion has no user-assigned
 color; any color set explicitly on the model always takes precedence.
-
-Identical to the PROMETHEE Playground's palette (promethee_core/palette.py),
-kept in sync so the two tools read as one family of apps.
 """
 from __future__ import annotations
 

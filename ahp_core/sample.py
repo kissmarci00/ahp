@@ -1,21 +1,21 @@
-"""The car-choice example from AHP.pdf ("A legjobb autó kiválasztása"), used
-as an in-app demo and as the reference dataset in tests/test_hierarchy.py.
+"""The car-choice example ("A legjobb autó kiválasztása"), used as an in-app
+demo and as the reference dataset in tests/test_hierarchy.py.
 
 Tree: Cél -> Költségek (Ár, Karbantartás, Fogyasztás), Esztétikum, Felszereltség
 (Biztonsági felszereltség, Kényelmi felszereltség) -> three cars A, B, C.
-Ár (Price) is set to DIRECT mode with a MIN direction, illustrating the GUI
-spec's item 35 request ("inkább direkt módon adjuk meg, pl. pénzbeli
-értéket") for scoring *alternatives*. Felszereltség is set to weigh its own
-two children (Biztonsági/Kényelmi felszereltség) via direct weighting
-instead of a PCM, illustrating AHP.pdf's own "közvetlen súlyozás" as a valid
-alternative for weighing *criteria* too — every other node is pairwise.
+Ár (Price) is set to DIRECT mode with a MIN direction, illustrating direct
+entry of a raw value ("inkább direkt módon adjuk meg, pl. pénzbeli értéket")
+for scoring *alternatives*. Felszereltség is set to weigh its own two
+children (Biztonsági/Kényelmi felszereltség) via direct weighting instead of
+a PCM, illustrating "közvetlen súlyozás" as a valid alternative for weighing
+*criteria* too — every other node is pairwise.
 
-The main-criteria matrix is exactly AHP.pdf's own worked numeric example
-(Költségek 2x Esztétikum, 3x Felszereltség; Esztétikum = Felszereltség), CR
-close to but not exactly 0 like a real judgment. Every other matrix here is
-built to be perfectly consistent (CR = 0), so the sample reads cleanly by
-default; users can edit any cell to explore inconsistency and incompleteness
-themselves on the Data Entry page.
+The main-criteria matrix is a worked numeric example (Költségek 2x
+Esztétikum, 3x Felszereltség; Esztétikum = Felszereltség), CR close to but
+not exactly 0 like a real judgment. Every other matrix here is built to be
+perfectly consistent (CR = 0), so the sample reads cleanly by default; users
+can edit any cell to explore inconsistency and incompleteness themselves on
+the Data Entry page.
 """
 from __future__ import annotations
 
@@ -55,7 +55,7 @@ def car_choice_example() -> ProblemData:
         matrix = problem.matrix_for(group_key)
         matrix.values[:, :] = np.array(matrix_values, dtype=float)
 
-    # Main criteria: Költségek, Esztétikum, Felszereltség — AHP.pdf's own example.
+    # Main criteria: Költségek, Esztétikum, Felszereltség.
     fill("__root__", [[1, 2, 3], [1 / 2, 1, 1], [1 / 3, 1, 1]])
 
     # Cost's children: Ár, Karbantartás, Fogyasztás — consistent, weights 4:2:1.

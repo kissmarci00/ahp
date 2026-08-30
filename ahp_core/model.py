@@ -1,25 +1,17 @@
 """Data model for an AHP (pairwise-comparison, PCM) decision problem.
 
-This module has no Streamlit dependency: it is the single source of truth
-for problem state, shared by every page through ``st.session_state`` (see
-app_state.py), mirroring how promethee_core/model.py anchors the PROMETHEE
-Playground.
+Streamlit-free; the single source of truth for problem state, shared by
+every page through ``st.session_state`` (see app_state.py).
 
-The key structural difference from PROMETHEE is that criteria form a
-**tree**, not a flat list: every main criterion may have sub-criteria, and
-so on. A node is identified by its (globally unique) ``name`` — there is no
-separate id concept, exactly like PROMETHEE identifies alternatives/criteria
-by name — and ``parent`` points at the parent node's name, or ``None`` for a
-top-level (main) criterion.
+Criteria form a tree, not a flat list. A node is identified by its
+(globally unique) ``name`` — no separate id concept — and ``parent`` points
+at the parent node's name, or ``None`` for a top-level (main) criterion.
 
-Per AHP.pdf's terminology: a node without children is a "levélszempont"
-(leaf criterion). Every node that has children owns a pairwise-comparison
-matrix (PCM) over those children — including the implicit root, whose
-"children" are the main criteria, keyed by the ``ROOT_KEY`` sentinel below.
-Every *leaf* criterion also owns a comparison — either a PCM over the
-alternatives (eval_mode=PAIRWISE), or, per the GUI spec's explicit request,
-a column of raw values that get normalized directly instead
-(eval_mode=DIRECT, e.g. "just type each alternative's price").
+Every node with children owns a pairwise-comparison matrix (PCM) over those
+children, including the implicit root (main criteria, keyed by
+``ROOT_KEY``). Every leaf also owns a comparison over the alternatives —
+either a PCM (eval_mode=PAIRWISE) or a column of raw values normalized
+directly (eval_mode=DIRECT, e.g. "just type each alternative's price").
 """
 from __future__ import annotations
 
@@ -44,18 +36,15 @@ class Direction(str, Enum):
 
 class EvalMode(str, Enum):
     """How a group's items get weighted: via a pairwise-comparison matrix, or
-    via directly-entered raw values that get normalized instead (AHP.pdf
-    itself discusses "közvetlen súlyozás", direct weighting, as a valid
-    alternative to pairwise comparison for weighing criteria — not just, per
-    the GUI spec's item 35, for scoring alternatives on a leaf). Applies
-    uniformly to any group: the root and non-leaf criteria (weighting their
-    children) as well as leaf criteria (weighting alternatives)."""
+    via directly-entered raw values ("közvetlen súlyozás") that get
+    normalized instead. Applies to any group — root, non-leaf criteria
+    weighting children, and leaf criteria weighting alternatives."""
     PAIRWISE = "pairwise"
     DIRECT = "direct"
 
 
 class WeightMethod(str, Enum):
-    """Global, problem-wide choice of weight-vector method (GUI spec item 18-20)."""
+    """Global, problem-wide choice of weight-vector method."""
     EIGENVECTOR = "eigenvector"
     LLSM = "llsm"
 
@@ -81,8 +70,8 @@ class PCM:
     """A pairwise-comparison matrix over an ordered list of item names.
 
     ``values[i, j]`` is "how many times more important/preferred item i is
-    over item j"; NaN marks a not-yet-entered (missing) comparison, per
-    NemTeljesenKitoltott.pdf's ``*`` notation. The diagonal is always 1.
+    over item j"; NaN marks a not-yet-entered (missing) comparison. The
+    diagonal is always 1.
     """
     items: list[str]
     values: np.ndarray  # shape (n, n)
@@ -120,11 +109,9 @@ class PCM:
         return len(self.missing_pairs()) == 0
 
     def reindex(self, new_items: list[str]) -> "PCM":
-        """Resize/reorder to ``new_items``, matching by name to preserve every
-        comparison whose both endpoints survive; anything involving a
-        brand-new item starts out missing. This is how the matrix silently
-        keeps up as criteria/alternatives are added, removed or reordered
-        elsewhere in the problem, without ever losing existing entries."""
+        """Resize/reorder to ``new_items``, matching by name so existing
+        comparisons survive; anything involving a brand-new item starts out
+        missing."""
         new = PCM.empty(new_items)
         old_index = {name: i for i, name in enumerate(self.items)}
         for a_idx, a in enumerate(new_items):
@@ -145,10 +132,8 @@ class PCM:
 class ProblemData:
     name: str = "New problem"
     description: str = ""
-    # The hierarchy's own top label (AHP.pdf's "a döntési feladat célja") —
-    # deliberately separate from `name`, which is just this saved file/session's
-    # title and needn't read the same as the actual decision goal shown at the
-    # root of the tree diagram.
+    # The tree's top label ("a döntési feladat célja") — separate from `name`,
+    # the saved file/session's own title.
     goal_name: str = "Goal"
     weight_method: WeightMethod = WeightMethod.EIGENVECTOR
     # How the root weighs the main criteria against each other — the root has
@@ -189,10 +174,8 @@ class ProblemData:
         return [c for c in self.leaf_criteria() if c.eval_mode == EvalMode.DIRECT]
 
     def node_eval_mode(self, group_key: str) -> EvalMode:
-        """How ``group_key`` weighs its items — the root's own field for the
-        main criteria, or a node's own field otherwise (meaning "how I weigh
-        my children" for a non-leaf, or "how I score alternatives" for a
-        leaf)."""
+        """How ``group_key`` weighs its items: the root field for the main
+        criteria, or the node's own field otherwise."""
         if group_key == ROOT_KEY:
             return self.root_eval_mode
         return self.node_by_name(group_key).eval_mode
@@ -207,9 +190,8 @@ class ProblemData:
             self.direct_values[node.name] = 0.0
 
     def all_pcm_group_keys(self) -> list[str]:
-        """Every group whose weighting is currently done via an editable PCM:
-        the root/non-leaf criteria in PAIRWISE mode, plus every PAIRWISE
-        leaf's alternative comparison."""
+        """Every group currently weighted via an editable PCM: root/non-leaf
+        criteria in PAIRWISE mode, plus every PAIRWISE leaf."""
         return [k for k in self.group_keys() if self.node_eval_mode(k) == EvalMode.PAIRWISE] + [
             c.name for c in self.pairwise_leaf_criteria()
         ]
@@ -220,9 +202,7 @@ class ProblemData:
         return [k for k in self.group_keys() if self.node_eval_mode(k) == EvalMode.DIRECT]
 
     def group_keys(self) -> list[str]:
-        """Names of every node that owns a "compare my children" weighting
-        (PCM or direct), plus the root sentinel for the main criteria — i.e.
-        everything with children."""
+        """Every node with children, plus the root sentinel."""
         return [ROOT_KEY] + [c.name for c in self.criteria if not self.is_leaf(c)]
 
     def group_items(self, group_key: str) -> list[str]:
@@ -239,11 +219,9 @@ class ProblemData:
     # -- matrix access (lazily created/reindexed) --------------------------------
 
     def matrix_for(self, group_key: str) -> PCM:
-        """The PCM for a group (root's main criteria, a non-leaf's children, or
-        a PAIRWISE leaf's alternatives), auto-resized to the group's current
-        items. Always returns the *same object* stored in ``self.matrices``, so
-        callers can mutate it in place (set_value/clear_value) and have that
-        stick without an explicit write-back."""
+        """The PCM for a group, auto-resized to its current items. Returns the
+        same object stored in ``self.matrices``, so callers can mutate it in
+        place (set_value/clear_value)."""
         items = self.group_items(group_key) if group_key in self.group_keys() else [
             a.name for a in self.alternatives
         ]

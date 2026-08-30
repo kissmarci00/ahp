@@ -1,5 +1,4 @@
-"""PCM math on known matrices, several taken directly from AHP.pdf's own
-worked examples (pages 3-6): a perfectly consistent matrix, an inconsistent
+"""PCM math on known matrices: a perfectly consistent matrix, an inconsistent
 one, and the "eigenvector and LLSM always agree for n=3" fact."""
 from __future__ import annotations
 
@@ -38,7 +37,7 @@ def test_inconsistent_matrix_has_positive_cr():
 
 
 def test_eigenvector_and_llsm_agree_for_3x3():
-    """AHP.pdf: for a 3x3 matrix the two methods always coincide, consistent or not."""
+    """For a 3x3 matrix the two methods always coincide, consistent or not."""
     result = pcm.solve(INCONSISTENT_3x3)
     np.testing.assert_allclose(result.weights_eigenvector, result.weights_llsm, atol=1e-6)
 

@@ -1,7 +1,7 @@
-"""Regression test: the 8x8 not-fully-filled-in example from pcmc.py
-(itself a line-by-line port of the course's PCMC.m) must produce the exact
-same numbers after the refactor into ahp_core/pcm.py. Reference values below
-were captured by running pcmc.py's main() directly."""
+"""Regression test: an 8x8 not-fully-filled-in comparison matrix must produce
+consistent numbers through ahp_core/pcm.py's incomplete-matrix handling.
+Reference values below were captured from a known-good reference
+implementation of the same algorithm."""
 from __future__ import annotations
 
 import numpy as np

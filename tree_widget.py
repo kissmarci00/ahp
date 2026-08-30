@@ -35,20 +35,15 @@ def _wrap_label(name: str, max_len: int = 14) -> str:
 
 def _mode_and_count_lines(problem: ProblemData, group_key: str, count: int, count_key: str) -> list[str]:
     """"pairwise" or "direct" for how a group weighs its items, plus how many
-    items — the exact same two-line shape for every group (root, non-leaf
-    weighing children, or leaf weighing alternatives), since AHP.pdf discusses
-    direct weighting as a valid alternative to pairwise comparison for
-    weighing criteria, not just (GUI spec item 35) for scoring alternatives
-    on a leaf — there's nothing leaf-specific about the mode itself, only the
-    optional min/max direction line added on top for a DIRECT leaf."""
+    items — the same two-line shape for every group (root, non-leaf, or
+    leaf)."""
     mode_line = t("tree.badge_direct") if problem.node_eval_mode(group_key) == EvalMode.DIRECT else t("tree.badge_pairwise")
     return [mode_line, t(count_key, n=count)]
 
 
 def _node_subtitle_lines(problem: ProblemData, node) -> list[str]:
-    """Extra lines describing the node: mode + item count for every node
-    (root/non-leaf/leaf alike), plus a leaf-DIRECT's min/max direction — the
-    "more data per node" the diagram shows beyond just the name."""
+    """Extra lines describing the node: mode + item count, plus a
+    leaf-DIRECT's min/max direction."""
     if problem.is_leaf(node):
         lines = _mode_and_count_lines(
             problem, node.name, len(problem.alternatives), "tree.badge_alternatives_count",
@@ -148,12 +143,9 @@ def build_tree_figure(
                 symbol="square", size=MARKER_SIZE, color=colors,
                 line=dict(color=line_colors, width=line_widths),
             ),
-            # Markers are a *fixed pixel size*, but the axis range is in data
-            # units — on a narrower browser window the same data-unit padding
-            # covers fewer pixels, so the edge boxes (whose centers sit right
-            # at x_min/x_max) get their far half clipped by the plot area.
-            # cliponaxis=False lets them render into the margin instead of
-            # being cut off, independent of how narrow the container gets.
+            # Markers are fixed pixel size but the axis range is data units,
+            # so on a narrow window the edge boxes get clipped by the plot
+            # area; cliponaxis=False lets them render into the margin instead.
             cliponaxis=False,
             customdata=names, hovertext=hover_texts, hovertemplate="%{hovertext}<extra></extra>",
             showlegend=False,
@@ -162,18 +154,10 @@ def build_tree_figure(
     max_depth = max((-y for y in ys), default=0)
     x_min, x_max = (min(xs), max(xs)) if xs else (0.0, 0.0)
     fig.update_xaxes(visible=False, showgrid=False, zeroline=False, range=[x_min - 0.6, x_max + 0.6])
-    # Explicit y-range padding above the root row (rather than relying on
-    # Plotly's autorange, which only accounts for the marker symbol itself,
-    # not the multi-line text label drawn on top of it) — without this the
-    # root's now-longer label (goal name + weighting-mode + child-count
-    # lines) gets clipped by the plot's top edge.
+    # Explicit y-range padding above the root row — Plotly's autorange only
+    # accounts for the marker symbol, not the multi-line label on top of it.
     fig.update_yaxes(visible=False, showgrid=False, zeroline=False, range=[-max_depth - 0.6, 0.6])
     fig.update_layout(
-        # Modest fixed-pixel margins (on top of cliponaxis=False above) —
-        # just enough headroom for a corner marker's overflow. Much bigger
-        # margins would eat into the plot's own inner width, which on a
-        # narrow container makes the (fixed-pixel-size) markers cover *more*
-        # of the shrunken data range and start overlapping their neighbors.
         margin=dict(l=30, r=30, t=40, b=30),
         height=min(800, max(400, 210 * (max_depth + 1))),
         clickmode="event+select",
@@ -191,15 +175,12 @@ def render_tree_selector(
     """Renders the diagram, tracks the current selection in
     ``st.session_state[state_key]`` (a group_key: ROOT_KEY or a criterion
     name), and returns it. A plain selectbox underneath mirrors the same
-    state for precise/keyboard selection, and to give every node a default
-    once something has been picked.
+    state for precise/keyboard selection.
 
-    Whichever control changes the selection, the *diagram itself* was drawn
-    with the value from before that change (it has to be — the click/pick
-    event is only known after rendering it), so the highlighted box would
-    always lag one interaction behind. Rather than live with that, force one
-    extra rerun right when the selection changes, so the diagram redraws
-    with the fresh highlight immediately instead of on the user's next click.
+    The diagram is always drawn with the value from before a selection
+    change (the click event is only known after rendering), so an extra
+    rerun is forced on change to redraw it with the fresh highlight
+    immediately rather than one click late.
     """
     current = st.session_state.get(state_key)
     fig = build_tree_figure(problem, selected=current, badge_fn=badge_fn)
@@ -227,11 +208,9 @@ def render_tree_selector(
         return (problem.goal_name or problem.name or none_label) if n == ROOT_KEY else n
 
     idx = options.index(current) if current in options else 0
-    # Keying by the *pre-interaction* current value forces the widget to
-    # remount (and thus respect the fresh `index`) whenever the chart drives
-    # a change, while leaving a user's own dropdown pick alone on the run
-    # that produces it (the key only changes on the *next* run, from the
-    # new value) — Streamlit otherwise ignores `index` after first mount.
+    # Keying by the current value forces a remount (respecting the fresh
+    # `index`) whenever the chart drives a change — Streamlit otherwise
+    # ignores `index` after first mount.
     chosen = st.selectbox(
         dropdown_label, options, index=idx, format_func=_label, key=f"{state_key}_dropdown_{idx}",
     )

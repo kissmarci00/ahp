@@ -10,19 +10,15 @@ Six sheets round-trip the full problem:
   color.
 - **PairwiseComparisons**: every matrix stacked in one sheet, each as its own
   labeled grid — a one-cell label row (the criterion name, or "(root)" for
-  the main-criteria matrix), then a header row of item names, then one row
-  per item with its comparison values, then a blank row before the next
-  matrix. This is the exact shape a pairwise comparison matrix is always
-  shown in (row item vs. column item), so the sheet reads and hand-edits
-  like the real thing instead of a database-style row list.
+  the main-criteria matrix), a header row of item names, one row per item
+  with its comparison values, then a blank row before the next matrix.
 - **DirectValues**: leaf, alternative, value — raw values for DIRECT-mode leaves.
 - **DirectWeights**: group, child, value — raw values for a DIRECT-mode root
-  or non-leaf criterion weighing its children (AHP.pdf's "közvetlen
-  súlyozás"). ``group`` is informational only (blank = root); values are
-  keyed by child name, which is unique across the whole tree.
+  or non-leaf criterion weighing its children ("közvetlen súlyozás").
+  ``group`` is informational only (blank = root); values are keyed by child
+  name, which is unique across the whole tree.
 
-Import is deliberately lenient about hand-edited files, following the same
-philosophy as the PROMETHEE Playground's io_utils.py: a missing optional
+Import is deliberately lenient about hand-edited files: a missing optional
 column or a blank cell gets the same default the Problem Setup page would
 use, reported back as a note rather than raising. Only a missing name, a
 duplicate name, an unparseable value, or a reference to an unknown item
@@ -113,10 +109,8 @@ def _group_label(group_key: str) -> str:
 
 def _write_pcm_sheet(writer: pd.ExcelWriter, problem: ProblemData) -> None:
     """One grid per matrix, stacked top to bottom: a label cell, a header row
-    of item names, then one row per item — the plain row/column shape a
-    pairwise comparison matrix is always drawn in. A blank cell is a missing
-    entry; both triangles are written (redundant with each other, but that's
-    exactly how the matrix already reads on the Data Entry page)."""
+    of item names, then one row per item. A blank cell is a missing entry;
+    both triangles are written (redundant, but matches the Data Entry page)."""
     sheet = writer.book.create_sheet("PairwiseComparisons")
     row = 1
     for group_key in problem.all_pcm_group_keys():
@@ -206,11 +200,10 @@ def _required_name_column(df: pd.DataFrame, sheet: str) -> list[str]:
 
 
 def _read_pcm_sheet(xls: pd.ExcelFile, problem: ProblemData) -> None:
-    """Parse the stacked-grid PairwiseComparisons sheet _write_pcm_sheet
-    writes: walk the sheet top to bottom, treating a row whose first cell is
-    the only non-blank one as a new matrix's label, the row right below it
-    as its item-name header, and the following rows (one per header item) as
-    its values — blank rows simply separate one matrix from the next."""
+    """Parse the stacked-grid sheet _write_pcm_sheet writes: a row with only
+    its first cell filled starts a new matrix, the row below it is the
+    item-name header, and the following rows (one per header item) are its
+    values."""
     raw = xls.parse("PairwiseComparisons", header=None)
     known_groups = set(problem.all_pcm_group_keys())
     n_rows = len(raw)

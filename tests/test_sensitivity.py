@@ -1,5 +1,5 @@
-"""Weight stability-interval sensitivity, generalized from PROMETHEE's flat
-model to AHP's criteria tree (ahp_core/sensitivity.py)."""
+"""Weight stability-interval sensitivity for AHP's criteria tree
+(ahp_core/sensitivity.py)."""
 from __future__ import annotations
 
 import numpy as np

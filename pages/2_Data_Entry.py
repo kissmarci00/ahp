@@ -23,11 +23,8 @@ if not problem.alternatives or not problem.criteria:
     st.stop()
 
 # Saaty's 1-9 verbal scale and its reciprocals, plus a "not entered yet"
-# sentinel for incomplete-matrix support (NemTeljesenKitoltott.pdf). A plain
-# string (not None) — Streamlit's selectbox doesn't reliably show a `None`
-# list entry as selected on a fresh mount (it renders the empty placeholder
-# instead, even with a matching `index`), so every "missing" option here and
-# in the Parent selectbox on Problem Setup uses a sentinel value instead.
+# sentinel. A plain string, not None — Streamlit's selectbox doesn't
+# reliably show a `None` option as selected on a fresh mount.
 _MISSING = "missing"
 _SAATY_VALUES = [_MISSING] + [1 / d for d in range(9, 1, -1)] + [1.0] + list(range(2, 10))
 
@@ -76,11 +73,8 @@ def _group_title(group_key: str) -> str:
 
 def _badge(group_key: str) -> str | None:
     if problem.node_eval_mode(group_key) == EvalMode.DIRECT:
-        # The tree diagram's own subtitle already says "direct" for this
-        # group, so repeating that here would be redundant — instead, flag
-        # whether its raw values still need filling in (same "how many are
-        # still missing" idea as the PAIRWISE branch below, just checking
-        # for the still-at-its-default 0.0 rather than an unset cell).
+        # Flag how many raw values still need filling in (still at their
+        # default 0.0), mirroring the PAIRWISE branch's missing-count below.
         node = None if group_key == ROOT_KEY else problem.node_by_name(group_key)
         if node is not None and problem.is_leaf(node):
             column = problem.direct_values.get(node.name)
@@ -117,7 +111,8 @@ def render_matrix(group_key: str) -> None:
         return
 
     st.markdown(f"**{t('data_entry.pcm_label')}**")
-    by_hand = st.checkbox(t("data_entry.enter_by_hand"), value=True, key=f"byhand_{group_key}_{gen}")
+    use_saaty = st.checkbox(t("data_entry.use_saaty_scale"), value=False, key=f"usesaaty_{group_key}_{gen}")
+    by_hand = not use_saaty
     if by_hand:
         st.caption(t("data_entry.enter_by_hand_caption"))
     for i in range(n):
@@ -182,9 +177,8 @@ def render_matrix(group_key: str) -> None:
 
 def render_direct_values(node) -> None:
     """Raw value entry for a DIRECT-mode leaf, scoring the alternatives on it
-    (GUI spec item 35) — same shape as render_direct_group_weights below:
-    caption, one number input per item, then the resulting normalized
-    weights table."""
+    — same shape as render_direct_group_weights below: caption, one number
+    input per item, then the resulting normalized weights table."""
     st.caption(t("data_entry.direct_values_caption"))
     alt_names = [a.name for a in problem.alternatives]
     cols = st.columns(max(len(alt_names), 1))
@@ -214,9 +208,9 @@ def render_direct_values(node) -> None:
 
 def render_direct_group_weights(group_key: str) -> None:
     """Raw value entry for a DIRECT-mode root/non-leaf, weighing its children
-    (AHP.pdf's "közvetlen súlyozás") — the same normalize-by-sum idea as a
-    leaf's direct alternative values above, just without a min/max direction:
-    a bigger entered value always means more importance."""
+    ("közvetlen súlyozás") — the same normalize-by-sum idea as a leaf's
+    direct alternative values above, just without a min/max direction: a
+    bigger entered value always means more importance."""
     items = problem.group_items(group_key)
     if not items:
         return

@@ -17,3 +17,6 @@ streamlit_run.log
 
 # Claude Code local tooling config — not part of the app.
 .claude/
+
+# Local packaging tooling/build output — not tracked in this repo.
+packaging/

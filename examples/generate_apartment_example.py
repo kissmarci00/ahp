@@ -84,7 +84,7 @@ def build() -> ProblemData:
     fill("Elhelyezkedés", [[1, 1 / 2], [2, 1]])
     fill("Környék", [[1, 2], [1 / 2, 1]])
 
-    # Direct weighting of a non-leaf's children (AHP.pdf "közvetlen súlyozás").
+    # Direct weighting of a non-leaf's children, rather than pairwise comparison.
     problem.set_group_eval_mode("Állapot és felszereltség", EvalMode.DIRECT)
     problem.direct_group_weights["Műszaki állapot"] = 3.0
     problem.direct_group_weights["Felszereltség színvonala"] = 2.0

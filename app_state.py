@@ -1,8 +1,7 @@
 """Streamlit session-state glue: the single ProblemData lives here.
 
 This is UI plumbing, not AHP math — kept separate from ahp_core so the math
-package has zero Streamlit dependency. Mirrors the PROMETHEE Playground's
-app_state.py.
+package has zero Streamlit dependency.
 """
 from __future__ import annotations
 
@@ -27,9 +26,8 @@ def get_problem() -> ProblemData:
 
 def set_problem(problem: ProblemData) -> None:
     """Replace the whole problem (new/sample/import). Bumps the generation
-    counter so pages that namespace positional widget keys by generation
-    start those widgets fresh instead of reusing cached values from the old
-    problem's same-numbered rows."""
+    counter so pages that namespace widget keys by generation start fresh
+    instead of reusing cached values from the old problem's rows."""
     st.session_state.problem = problem
     st.session_state["problem_generation"] = st.session_state.get("problem_generation", 0) + 1
     save_problem(problem)
@@ -60,8 +58,7 @@ def _load_autosave() -> ProblemData | None:
 
 
 # Scoped to Streamlit's download-button wrapper only, so regular buttons,
-# checkboxes, sliders etc. keep their normal styling. Identical to the
-# PROMETHEE Playground's styling, kept in sync for a consistent look.
+# checkboxes, sliders etc. keep their normal styling.
 _DOWNLOAD_BUTTON_CSS = """
 <style>
 div[data-testid="stDownloadButton"] button {

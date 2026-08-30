@@ -46,8 +46,7 @@ FONT_FAMILY = 'system-ui, -apple-system, "Segoe UI", sans-serif'
 def _ranked_bar_chart(items: dict[str, float], colors: dict[str, str], x_title: str) -> go.Figure:
     """A horizontal bar chart, highest value on top, one bar per item, colored
     by the item's own assigned identity color, with the value direct-labeled
-    at the bar's end — magnitude comparison across a handful of categories,
-    per the dataviz skill's form heuristic."""
+    at the bar's end."""
     ordered = sorted(items.items(), key=lambda kv: kv[1], reverse=True)
     names = [name for name, _ in ordered]
     values = [value for _, value in ordered]
@@ -102,10 +101,9 @@ st.plotly_chart(
 leaf_weights_df = pd.DataFrame(
     {t("results.weight_col"): result.leaf_weights}
 ).sort_values(t("results.weight_col"), ascending=False)
-# Display copy with the criterion name as a plain column rather than the
-# DataFrame index — st.dataframe doesn't reliably widen the index column to
-# fit longer names, silently truncating them; a regular column sizes
-# correctly. leaf_weights_df itself (index intact) is still what's exported.
+# Display copy with the criterion name as a plain column, not the index —
+# st.dataframe truncates a long index column instead of widening it.
+# leaf_weights_df itself (index intact) is still what's exported.
 leaf_weights_display = leaf_weights_df.reset_index(names=t("common.item"))
 st.dataframe(
     leaf_weights_display.style.format({t("results.weight_col"): "{:.4f}"}), width="stretch", hide_index=True,
@@ -115,17 +113,10 @@ st.divider()
 st.subheader(t("results.node_weights_subheader"))
 st.caption(t("results.node_weights_caption"))
 
-# One bordered card per node (matching the Data Entry page's per-matrix
-# style) instead of one long flat table — each node's own items/weights/CR
-# are visually its own unit, rather than blurring into the next node's rows.
-# Ordered by the criteria's own defined order (root first) rather than
-# result.node_results' incidental insertion order (root, then non-leaves via
-# the tree walk, then pairwise leaves via the scoring loop — an
-# implementation detail, not a natural reading order). DIRECT-mode leaves
-# (e.g. "Ár") never get an entry in result.node_results at all — the scoring
-# loop reads their weights straight from direct_alternative_weights instead
-# of going through a PCM — so they're computed separately here to still get
-# their own card, alongside every PAIRWISE leaf and non-leaf/root group.
+# One bordered card per node, ordered by the tree's own definition order
+# (root first) rather than result.node_results' incidental insertion order.
+# DIRECT-mode leaves have no entry in result.node_results at all, so their
+# weights are pulled from direct_alternative_weights separately here.
 rows = []
 for group_key in [ROOT_KEY] + [c.name for c in problem.criteria]:
     if group_key == ROOT_KEY:

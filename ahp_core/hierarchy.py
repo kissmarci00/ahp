@@ -1,16 +1,13 @@
 """Aggregating the criteria tree into a single ranking of alternatives.
 
-Each node's PCM gives *local* weights over its children (AHP.pdf's w vector).
-A criterion's *global* weight is its local weight multiplied down the chain
-of its ancestors' local weights — the root's own "local weight" is 1 by
-convention, since it has no parent. Every leaf criterion's global weight,
-renormalized to sum to 1 over all leaves, is the w_k used in AHP.pdf's
-total-score formula:
+Each node's PCM gives local weights over its children. A criterion's global
+weight is its local weight multiplied down the chain of its ancestors'
+local weights (root = 1). Leaf global weights, renormalized to sum to 1,
+are the w_k in the total-score formula:
 
     T_i = sum_k w_k * e_ki
 
-where e_ki is alternative i's evaluation on leaf k (from that leaf's own PCM
-over the alternatives, or from direct-rating normalization — GUI spec item 35).
+where e_ki is alternative i's evaluation on leaf k.
 """
 from __future__ import annotations
 
@@ -41,11 +38,10 @@ class HierarchyResult:
 
 
 def direct_group_weights(problem: ProblemData, group_key: str) -> dict[str, float]:
-    """Normalized weight of every child in a DIRECT-mode group (root or a
-    non-leaf criterion weighting its children by directly-entered values —
-    AHP.pdf's "közvetlen súlyozás" — rather than a PCM). No direction/min-max
-    concept here, unlike direct_alternative_weights: a bigger entered value
-    always means more importance, there's no "smaller is better" criterion."""
+    """Normalized weight of every child in a DIRECT-mode group ("közvetlen
+    súlyozás" instead of a PCM). No min/max direction here, unlike
+    direct_alternative_weights — a bigger value always means more
+    importance."""
     items = problem.group_items(group_key)
     raw = {name: problem.direct_group_weights.get(name, 0.0) for name in items}
     total = sum(raw.values())
@@ -62,11 +58,9 @@ def _matrix_labels(group_key: str) -> tuple[str, str]:
 
 
 def _disconnected_matrix_error(group_keys: list[str]) -> pcm_math.DisconnectedMatrixError:
-    """Build one bilingual fallback error message naming every disconnected
-    matrix at once, rather than only the first one a caller happened to hit.
-    The exception also carries ``group_keys`` itself (raw, unlocalized) so a
-    page can build a single-language message via i18n instead of using this
-    bilingual text — see DisconnectedMatrixError's docstring."""
+    """Bilingual fallback error naming every disconnected matrix at once. The
+    exception also carries ``group_keys`` raw, so a page can build its own
+    localized message instead (see DisconnectedMatrixError)."""
     hu_labels = [_matrix_labels(k)[0] for k in group_keys]
     en_labels = [_matrix_labels(k)[1] for k in group_keys]
     if len(group_keys) == 1:
@@ -87,9 +81,8 @@ def _disconnected_matrix_error(group_keys: list[str]) -> pcm_math.DisconnectedMa
 
 
 def find_disconnected_matrices(problem: ProblemData) -> list[str]:
-    """Every currently-PAIRWISE group (root, non-leaf, or leaf) whose
-    comparison graph isn't connected — lets compute_hierarchy report every
-    problem matrix at once instead of stopping at the first one it visits."""
+    """Every currently-PAIRWISE group whose comparison graph isn't connected,
+    so compute_hierarchy can report all of them at once."""
     disconnected = []
     for group_key in problem.all_pcm_group_keys():
         matrix = problem.matrix_for(group_key)
@@ -101,9 +94,9 @@ def find_disconnected_matrices(problem: ProblemData) -> list[str]:
 def compute_node_result(
     problem: ProblemData, group_key: str, override: dict[str, float] | None = None
 ) -> NodeResult:
-    """Solve a single group's weights (via its PCM, or direct entry, or an
-    override) — exposed separately from compute_hierarchy so pages can
-    inspect any one group without running the full aggregation."""
+    """Solve a single group's weights (PCM, direct entry, or an override),
+    exposed separately so pages can inspect one group without running the
+    full aggregation."""
     items = problem.group_items(group_key) if group_key in problem.group_keys() else problem.matrix_for(group_key).items
     if override is not None:
         return NodeResult(group_key=group_key, items=items, local_weights=dict(override), pcm_result=None)
@@ -127,8 +120,8 @@ def compute_node_result(
 
 def direct_alternative_weights(problem: ProblemData, leaf: CriterionNode) -> dict[str, float]:
     """Normalized weight of every alternative on a DIRECT-rating leaf, from its
-    raw values (GUI spec item 35): proportional to the value for a maximized
-    leaf, proportional to the reciprocal for a minimized one (e.g. cost)."""
+    raw values: proportional to the value for a maximized leaf, proportional
+    to the reciprocal for a minimized one (e.g. cost)."""
     alt_names = [a.name for a in problem.alternatives]
     if leaf.name in problem.direct_values.columns:
         values = problem.direct_values[leaf.name].reindex(alt_names).fillna(0.0).astype(float)
@@ -159,12 +152,11 @@ def compute_hierarchy(
     """Run the full AHP computation: local weights at every node, global
     criterion weights, leaf weights, and the alternatives' total scores and
     ranking. Raises pcm.DisconnectedMatrixError if any matrix's comparison
-    graph isn't connected (GUI spec item 24).
+    graph isn't connected.
 
     ``overrides`` forces a group's local weights to a given dict instead of
-    solving its PCM — used by sensitivity.py to ask "what if this node's
-    local weight were exactly w instead of whatever its PCM says", without
-    duplicating the aggregation logic below."""
+    solving its PCM — used by sensitivity.py to test "what if this weight
+    were w" without duplicating the aggregation logic."""
     disconnected = find_disconnected_matrices(problem)
     if disconnected:
         raise _disconnected_matrix_error(disconnected)

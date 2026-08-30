@@ -93,7 +93,7 @@ def export_table_to_excel(
 ) -> bytes:
     """Export a single DataFrame (row index + columns both treated as labels) to
     a styled .xlsx. ``notes`` are optional extra label/value rows appended below
-    the table (used for e.g. the three PROMETHEE ranking orders)."""
+    the table."""
     wb = Workbook()
     ws = wb.active
     ws.title = _safe_sheet_name(sheet_name)
