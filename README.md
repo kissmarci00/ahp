@@ -91,5 +91,5 @@ pytest
 - `ahp_core/` — the math/data model, no Streamlit dependency (PCM solving, hierarchy aggregation, sensitivity, Excel I/O)
 - `pages/` — the Streamlit UI, one file per page
 - `dashboard.py`, `app_state.py`, `i18n.py`, `tree_widget.py` — app shell, session state, translations, the shared tree diagram widget
-- `examples/` — sample problems importable from the Home page, plus the script that generated the apartment-choice one
+- `examples/` — sample problems importable from the Home page
 - `tests/` — pytest suite for `ahp_core/`
