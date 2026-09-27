@@ -62,6 +62,25 @@ def _closest_option_index(current: float) -> int:
     return int(np.argmin(diffs))
 
 
+# By-hand entry direction: matrix.values[i, j] > 1 means i is preferred over
+# j (mirrors _format_option's convention below) - splitting a ratio into a
+# direction plus a magnitude >= 1 means nobody ever has to type or round a
+# reciprocal decimal by hand, unlike a single "i / j" field that forces
+# values like 0.333 for "j is 3x more important."
+_DIR_I_OVER_J = "i_over_j"
+_DIR_EQUAL = "equal"
+_DIR_J_OVER_I = "j_over_i"
+_DIRECTIONS = [_DIR_I_OVER_J, _DIR_EQUAL, _DIR_J_OVER_I]
+
+
+def _direction_and_magnitude(value: float) -> tuple[str, float]:
+    if np.isnan(value) or abs(value - 1.0) < 1e-9:
+        return _DIR_EQUAL, 1.0
+    if value > 1.0:
+        return _DIR_I_OVER_J, value
+    return _DIR_J_OVER_I, 1.0 / value
+
+
 def _group_title(group_key: str) -> str:
     if group_key == ROOT_KEY:
         return t("data_entry.matrix_for_root")
@@ -119,7 +138,7 @@ def render_matrix(group_key: str) -> None:
         for j in range(i + 1, n):
             current = matrix.values[i, j]
             if by_hand:
-                row_cols = st.columns([2.5, 1.2, 2.3])
+                row_cols = st.columns([2.2, 1.0, 2.2, 1.4])
                 row_cols[0].markdown(f"{items[i]} — {items[j]}")
                 missing_key = f"byhand_missing_{group_key}_{gen}_{items[i]}_{items[j]}"
                 is_missing = row_cols[1].checkbox(
@@ -129,12 +148,25 @@ def render_matrix(group_key: str) -> None:
                     if not np.isnan(current):
                         matrix.clear_value(i, j)
                 else:
-                    default_val = current if not np.isnan(current) else 1.0
-                    value_key = f"byhand_val_{group_key}_{gen}_{items[i]}_{items[j]}"
-                    new_val = row_cols[2].number_input(
-                        f"{items[i]} / {items[j]}", value=float(default_val), min_value=1e-4, step=0.1,
-                        format="%.3f", key=value_key, label_visibility="collapsed",
+                    default_direction, default_magnitude = _direction_and_magnitude(current)
+                    dir_key = f"byhand_dir_{group_key}_{gen}_{items[i]}_{items[j]}"
+                    direction = row_cols[2].selectbox(
+                        f"{items[i]}/{items[j]} direction", _DIRECTIONS,
+                        index=_DIRECTIONS.index(default_direction),
+                        format_func=lambda d, ii=items[i], jj=items[j]: {
+                            _DIR_I_OVER_J: f"{ii} ≻ {jj}", _DIR_EQUAL: f"{ii} = {jj}", _DIR_J_OVER_I: f"{jj} ≻ {ii}",
+                        }[d],
+                        key=dir_key, label_visibility="collapsed",
                     )
+                    if direction == _DIR_EQUAL:
+                        new_val = 1.0
+                    else:
+                        mag_key = f"byhand_mag_{group_key}_{gen}_{items[i]}_{items[j]}"
+                        magnitude = row_cols[3].number_input(
+                            f"{items[i]}/{items[j]} magnitude", value=float(default_magnitude), min_value=1.0,
+                            step=0.1, key=mag_key, label_visibility="collapsed",
+                        )
+                        new_val = magnitude if direction == _DIR_I_OVER_J else 1.0 / magnitude
                     if np.isnan(current) or abs(current - new_val) > 1e-9:
                         matrix.set_value(i, j, new_val)
             else:

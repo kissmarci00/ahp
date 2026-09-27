@@ -110,7 +110,10 @@ def _group_label(group_key: str) -> str:
 def _write_pcm_sheet(writer: pd.ExcelWriter, problem: ProblemData) -> None:
     """One grid per matrix, stacked top to bottom: a label cell, a header row
     of item names, then one row per item. A blank cell is a missing entry;
-    both triangles are written (redundant, but matches the Data Entry page)."""
+    only the upper triangle (i < j) is written - _read_pcm_sheet's
+    matrix.set_value derives the reciprocal automatically, same as the
+    by-hand Data Entry input this mirrors, so the lower triangle would just
+    be redundant."""
     sheet = writer.book.create_sheet("PairwiseComparisons")
     row = 1
     for group_key in problem.all_pcm_group_keys():
@@ -124,7 +127,7 @@ def _write_pcm_sheet(writer: pd.ExcelWriter, problem: ProblemData) -> None:
         row += 1
         for i, name in enumerate(matrix.items):
             sheet.cell(row=row, column=1, value=name)
-            for j in range(matrix.size()):
+            for j in range(i + 1, matrix.size()):
                 value = matrix.values[i, j]
                 if not np.isnan(value):
                     sheet.cell(row=row, column=2 + j, value=float(value))
