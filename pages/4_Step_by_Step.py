@@ -10,7 +10,7 @@ from app_state import get_problem
 from i18n import t
 from ahp_core import pcm as pcm_math
 from ahp_core.hierarchy import compute_hierarchy, compute_node_result, direct_alternative_weights
-from ahp_core.model import EvalMode, ROOT_KEY
+from ahp_core.model import EvalMode, ROOT_KEY, WeightMethod
 
 
 def _format_matrix(values: np.ndarray, items: list[str]) -> pd.DataFrame:
@@ -86,7 +86,7 @@ st.dataframe(
 
 st.divider()
 st.subheader(t("step.cr_subheader"))
-cr = node_result.pcm_result.cr
+cr = node_result.pcm_result.cr_for(problem.weight_method)
 cr_label = t("common.cr_ok") if cr <= 0.1 else t("common.cr_bad")
 col1, col2 = st.columns(2)
 col1.metric(t("common.cr"), f"{cr:.4f}")
@@ -96,7 +96,11 @@ if cr <= 0.1:
 else:
     st.warning(cr_label)
 if not node_result.pcm_result.was_complete:
-    st.caption(t("common.cr_minimal_completion_note"))
+    note_key = (
+        "common.cr_minimal_completion_note" if problem.weight_method == WeightMethod.EIGENVECTOR
+        else "common.cr_llsm_completion_note"
+    )
+    st.caption(t(note_key))
 
 st.divider()
 st.subheader(t("step.aggregation_subheader"))

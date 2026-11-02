@@ -145,6 +145,18 @@ def complete_min_cr(
     return M
 
 
+def implied_completion(
+    weights: np.ndarray, values: np.ndarray, missing_pairs: list[tuple[int, int]]
+) -> np.ndarray:
+    """Fill in missing entries with the ratio a weight vector implies
+    (w_i / w_j); known entries are left as given."""
+    M = values.copy()
+    for i, j in missing_pairs:
+        M[i, j] = weights[i] / weights[j]
+        M[j, i] = weights[j] / weights[i]
+    return M
+
+
 def cr_value(lambda_max: float, n: int) -> float:
     if n <= 2:
         return 0.0
@@ -165,12 +177,17 @@ class PCMResult:
     weights_llsm: np.ndarray
     lambda_max: float
     cr: float
+    cr_llsm: float
     completed_matrix: np.ndarray  # the matrix the eigenvector method actually used
     was_complete: bool
 
     def weights_for(self, method) -> np.ndarray:
         from ahp_core.model import WeightMethod
         return self.weights_eigenvector if method == WeightMethod.EIGENVECTOR else self.weights_llsm
+
+    def cr_for(self, method) -> float:
+        from ahp_core.model import WeightMethod
+        return self.cr if method == WeightMethod.EIGENVECTOR else self.cr_llsm
 
 
 def solve(values: np.ndarray) -> PCMResult:
@@ -194,7 +211,11 @@ def solve(values: np.ndarray) -> PCMResult:
     weights_em, lambda_max = eigenvector_weights(completed)
     weights_llsm = llsm_weights_complete(completed) if was_complete else llsm_weights_incomplete(values)
     cr = cr_value(lambda_max, n)
+    if was_complete:
+        cr_llsm = cr
+    else:
+        cr_llsm = cr_value(_lambda_max_of(implied_completion(weights_llsm, values, missing)), n)
     return PCMResult(
         weights_eigenvector=weights_em, weights_llsm=weights_llsm, lambda_max=lambda_max,
-        cr=cr, completed_matrix=completed, was_complete=was_complete,
+        cr=cr, cr_llsm=cr_llsm, completed_matrix=completed, was_complete=was_complete,
     )

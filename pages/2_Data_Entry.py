@@ -9,7 +9,7 @@ from app_state import get_problem, problem_generation, save_problem
 from i18n import t
 from ahp_core import pcm as pcm_math
 from ahp_core.hierarchy import direct_alternative_weights, direct_group_weights as compute_direct_group_weights
-from ahp_core.model import EvalMode, ROOT_KEY
+from ahp_core.model import EvalMode, ROOT_KEY, WeightMethod
 from tree_widget import render_tree_selector
 
 st.title(t("data_entry.title"))
@@ -195,10 +195,15 @@ def render_matrix(group_key: str) -> None:
         st.error(t("common.disconnected_error"))
         return
 
-    cr_label = t("common.cr_ok") if result.cr <= 0.1 else t("common.cr_bad")
-    st.metric(t("common.cr"), f"{result.cr:.4f}", help=cr_label)
+    cr = result.cr_for(problem.weight_method)
+    cr_label = t("common.cr_ok") if cr <= 0.1 else t("common.cr_bad")
+    st.metric(t("common.cr"), f"{cr:.4f}", help=cr_label)
     if not result.was_complete:
-        st.caption(t("common.cr_minimal_completion_note"))
+        note_key = (
+            "common.cr_minimal_completion_note" if problem.weight_method == WeightMethod.EIGENVECTOR
+            else "common.cr_llsm_completion_note"
+        )
+        st.caption(t(note_key))
     weights = result.weights_for(problem.weight_method)
     st.caption(t("data_entry.local_weights_caption"))
     st.dataframe(

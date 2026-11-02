@@ -8,7 +8,7 @@ from app_state import get_problem, style_download_buttons
 from i18n import t
 from ahp_core import pcm as pcm_math
 from ahp_core.hierarchy import compute_hierarchy, direct_alternative_weights
-from ahp_core.model import EvalMode, ROOT_KEY
+from ahp_core.model import EvalMode, ROOT_KEY, WeightMethod
 from ahp_core.table_export import export_tables_to_excel
 
 style_download_buttons()
@@ -122,7 +122,7 @@ for group_key in [ROOT_KEY] + [c.name for c in problem.criteria]:
     if group_key == ROOT_KEY:
         node_result = result.node_results[ROOT_KEY]
         local_weights = node_result.local_weights
-        cr = node_result.pcm_result.cr if node_result.pcm_result is not None else None
+        cr = node_result.pcm_result.cr_for(problem.weight_method) if node_result.pcm_result is not None else None
         was_complete = node_result.pcm_result is None or node_result.pcm_result.was_complete
     else:
         node = problem.node_by_name(group_key)
@@ -140,12 +140,16 @@ for group_key in [ROOT_KEY] + [c.name for c in problem.criteria]:
         elif group_key in result.node_results:
             node_result = result.node_results[group_key]
             local_weights = node_result.local_weights
-            cr = node_result.pcm_result.cr if node_result.pcm_result is not None else None
+            cr = node_result.pcm_result.cr_for(problem.weight_method) if node_result.pcm_result is not None else None
             was_complete = node_result.pcm_result is None or node_result.pcm_result.was_complete
         else:
             continue
 
-    cr_note = t("common.cr_minimal_completion_note") if (cr is not None and not was_complete) else ""
+    cr_note_key = (
+        "common.cr_minimal_completion_note" if problem.weight_method == WeightMethod.EIGENVECTOR
+        else "common.cr_llsm_completion_note"
+    )
+    cr_note = t(cr_note_key) if (cr is not None and not was_complete) else ""
     for item, weight in local_weights.items():
         rows.append(
             {
@@ -163,7 +167,7 @@ for group_key in [ROOT_KEY] + [c.name for c in problem.criteria]:
             cr_icon = "✓" if cr <= 0.1 else "⚠"
             header_cols[1].caption(f"{cr_icon} CR {cr:.4f}")
             if not was_complete:
-                header_cols[1].caption(t("common.cr_minimal_completion_note"))
+                header_cols[1].caption(t(cr_note_key))
         node_df = pd.DataFrame(
             {t("common.item"): list(local_weights.keys()), t("results.local_weight_col"): list(local_weights.values())}
         )

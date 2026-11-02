@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 from ahp_core import pcm
+from ahp_core.model import WeightMethod
 
 CONSISTENT_4x4 = np.array(
     [[1, 2, 4, 12], [1 / 2, 1, 2, 6], [1 / 4, 1 / 2, 1, 3], [1 / 12, 1 / 6, 1 / 3, 1]]
@@ -86,3 +87,54 @@ def test_two_by_two_is_always_perfectly_consistent():
     result = pcm.solve(values)
     assert result.cr == 0.0
     np.testing.assert_allclose(result.weights_eigenvector, [7 / 8, 1 / 8], atol=1e-6)
+
+
+def _incomplete_4x4():
+    values = np.full((4, 4), np.nan)
+    np.fill_diagonal(values, 1.0)
+    pairs = {(0, 1): 5.0, (0, 2): 7.0, (1, 2): 5.0, (1, 3): 1 / 3, (2, 3): 1 / 7}
+    for (i, j), v in pairs.items():
+        values[i, j] = v
+        values[j, i] = 1.0 / v
+    return values
+
+
+def _incomplete_5x5_multiple_missing():
+    # 4 of 10 pairs missing — a single missing pair tends to make the
+    # eigenvector's CR-minimal completion and the LLSM-implied one coincide
+    # almost exactly, so this needs several missing pairs to actually diverge.
+    values = np.full((5, 5), np.nan)
+    np.fill_diagonal(values, 1.0)
+    pairs = {(0, 1): 5.0, (0, 2): 7.0, (1, 2): 5.0, (2, 3): 3.0, (3, 4): 2.0, (0, 4): 9.0}
+    for (i, j), v in pairs.items():
+        values[i, j] = v
+        values[j, i] = 1.0 / v
+    return values
+
+
+def test_cr_llsm_equals_cr_when_complete():
+    result = pcm.solve(CONSISTENT_4x4)
+    assert result.cr_llsm == result.cr
+
+
+def test_cr_llsm_matches_the_llsm_implied_completion():
+    values = _incomplete_5x5_multiple_missing()
+    result = pcm.solve(values)
+    assert not result.was_complete
+
+    missing = [(i, j) for i in range(5) for j in range(i + 1, 5) if np.isnan(values[i, j])]
+    implied = pcm.implied_completion(result.weights_llsm, values, missing)
+    eigvals = np.linalg.eigvals(implied)
+    expected_lambda_max = eigvals[np.argmax(np.abs(eigvals))].real
+    expected_cr = pcm.cr_value(expected_lambda_max, 5)
+
+    assert result.cr_llsm == pytest.approx(expected_cr)
+    # And it genuinely differs from the eigenvector-based CR for this matrix
+    # — proving the two aren't accidentally always equal.
+    assert result.cr_llsm != pytest.approx(result.cr)
+
+
+def test_cr_for_selects_the_right_value():
+    result = pcm.solve(_incomplete_4x4())
+    assert result.cr_for(WeightMethod.EIGENVECTOR) == result.cr
+    assert result.cr_for(WeightMethod.LLSM) == result.cr_llsm

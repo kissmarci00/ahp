@@ -54,6 +54,10 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "en": "This is the CR-minimal completion's CR value.",
         "hu": "Ez a CR-minimális kitöltés CR-értéke.",
     },
+    "common.cr_llsm_completion_note": {
+        "en": "This is the CR of the completion implied by the LLSM weights.",
+        "hu": "Ez a CR az LLSM-súlyok által indukált kitöltés CR-értéke.",
+    },
     "common.disconnected_error": {
         "en": "This matrix's comparison graph is not connected — add more comparisons "
         "so every item is linked, directly or indirectly, to every other.",
